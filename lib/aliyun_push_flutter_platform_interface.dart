@@ -182,8 +182,9 @@ abstract class AliyunPushFlutterPlatform extends PlatformInterface {
         'jumpToAndroidNotificationSettings() has not been implemented.');
   }
 
-  /// 开启 iOS debug 日志
-  @Deprecated("This method is deprecated in the AlicloudPush iOS SDK.")
+  /// 已废弃，请改用 setIOSLogLevel(4) 开启 iOS Debug 日志。
+  @Deprecated(
+      "Use setIOSLogLevel(4) instead. The underlying iOS SDK turnOnDebug API is deprecated.")
   Future<Map<dynamic, dynamic>> turnOnIOSDebug() async {
     throw UnimplementedError('turnOnIOSDebug() has not been implemented.');
   }

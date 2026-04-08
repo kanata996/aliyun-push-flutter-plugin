@@ -396,7 +396,8 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
     return result;
   }
 
-  @Deprecated("This method is deprecated in the AlicloudPush iOS SDK.")
+  @Deprecated(
+      "Use setIOSLogLevel(4) instead. The underlying iOS SDK turnOnDebug API is deprecated.")
   @override
   Future<Map<dynamic, dynamic>> turnOnIOSDebug() async {
     if (!Platform.isIOS) {

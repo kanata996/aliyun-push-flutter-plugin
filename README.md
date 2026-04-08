@@ -1082,6 +1082,14 @@ _aliyunPush.setAndroidBadgeNum(5).then((result) {
 });
 ```
 
+### ~~turnOnIOSDebug~~
+
+~~`Future<Map<dynamic, dynamic>> turnOnIOSDebug() async`~~
+
+> 已废弃。阿里云 iOS SDK 已废弃原生 `turnOnDebug` 接口。
+>
+> 插件当前为了兼容旧调用仍保留此方法，但请改用 `setIOSLogLevel(4)`。
+
 ### setIOSLogLevel
 
 `Future<Map<dynamic, dynamic>> setIOSLogLevel(int level) async`
@@ -1097,6 +1105,8 @@ _aliyunPush.setAndroidBadgeNum(5).then((result) {
 设置 iOS 推送 SDK 输出日志的级别
 
 > **注意：只支持 iOS 平台**
+>
+> `turnOnIOSDebug()` 已废弃。如需开启 Debug 日志，请使用 `setIOSLogLevel(4)`。
 
 返回值：
 
