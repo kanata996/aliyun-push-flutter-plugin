@@ -331,7 +331,7 @@ public class AliyunPushPlugin: NSObject, FlutterPlugin, UNUserNotificationCenter
         result(CloudPushSDK.getDeviceId() ?? "")
     }
 
-    /// 打开Debug日志
+    /// 兼容旧插件 API；底层改为 setLogLevel(.debug)，避免继续调用已废弃的 turnOnDebug。
     private func turnOnDebug(result: @escaping FlutterResult) {
         CloudPushSDK.setLogLevel(MPLogLevel.debug)
         result([KEY_CODE: CODE_SUCCESS])

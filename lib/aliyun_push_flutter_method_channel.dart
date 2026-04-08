@@ -322,6 +322,20 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
   }
 
   @override
+  Future<Map<dynamic, dynamic>> setAndroidBadgeNum(int num) async {
+    if (!Platform.isAndroid) {
+      return {
+        'code': kAliyunPushOnlyAndroid,
+        'errorMsg': 'Only support Android',
+      };
+    }
+
+    Map<dynamic, dynamic> result =
+        await methodChannel.invokeMethod('setBadgeNum', {'badgeNum': num});
+    return result;
+  }
+
+  @override
   Future<Map<dynamic, dynamic>> setIOSBadgeNum(int num) async {
     if (!Platform.isIOS) {
       return {
@@ -382,7 +396,8 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
     return result;
   }
 
-  @Deprecated("This method is deprecated in the AlicloudPush iOS SDK.")
+  @Deprecated(
+      "Use setIOSLogLevel(4) instead. The underlying iOS SDK turnOnDebug API is deprecated.")
   @override
   Future<Map<dynamic, dynamic>> turnOnIOSDebug() async {
     if (!Platform.isIOS) {

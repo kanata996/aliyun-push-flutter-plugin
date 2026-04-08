@@ -1040,6 +1040,56 @@ bool isEnabled = await _aliyunPush.isAndroidNotificationEnabled(
 _aliyunPush.jumpToAndroidNotificationSettings();
 ```
 
+### setAndroidBadgeNum
+
+`Future<Map<dynamic, dynamic>> setAndroidBadgeNum(int num) async`
+
+设置 Android 数字角标
+
+> **注意：只支持 Android 平台**
+>
+> **注意：仅华为、荣耀、vivo 厂商通道生效，要求 Android SDK >= 3.9.1**
+>
+> **注意：`0` 表示清除角标，华为/荣耀机型清角标需要客户端主动调用该接口**
+
+返回值：
+
+`Map<dynamic, dynamic>`
+
+map 中包含两个 key 值:
+
+- `code`: 错误码
+- `errorMsg`: 错误信息
+
+配置说明：
+
+- 插件已内置声明 `com.huawei.android.launcher.permission.CHANGE_BADGE`
+- 插件已内置声明 `com.vivo.notification.permission.BADGE_ICON`
+- 服务端若通过推送控制角标，建议优先使用 `AndroidBadgeSetNum`，避免重复累加导致角标失真
+
+代码示例：
+
+```dart
+_aliyunPush.setAndroidBadgeNum(5).then((result) {
+    var code = result['code'];
+    if (code == kAliyunPushSuccessCode) {
+        Fluttertoast.showToast(
+            msg: '设置 Android 角标成功', gravity: ToastGravity.CENTER);
+    } else {
+        var errorCode = result['code'];
+        var errorMsg = result['errorMsg'];
+    }
+});
+```
+
+### ~~turnOnIOSDebug~~
+
+~~`Future<Map<dynamic, dynamic>> turnOnIOSDebug() async`~~
+
+> 已废弃。阿里云 iOS SDK 已废弃原生 `turnOnDebug` 接口。
+>
+> 插件当前为了兼容旧调用仍保留此方法，但请改用 `setIOSLogLevel(4)`。
+
 ### setIOSLogLevel
 
 `Future<Map<dynamic, dynamic>> setIOSLogLevel(int level) async`
@@ -1055,6 +1105,8 @@ _aliyunPush.jumpToAndroidNotificationSettings();
 设置 iOS 推送 SDK 输出日志的级别
 
 > **注意：只支持 iOS 平台**
+>
+> `turnOnIOSDebug()` 已废弃。如需开启 Debug 日志，请使用 `setIOSLogLevel(4)`。
 
 返回值：
 

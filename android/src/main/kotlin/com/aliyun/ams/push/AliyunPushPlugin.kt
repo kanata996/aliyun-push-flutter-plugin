@@ -28,6 +28,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import java.io.File
+import java.util.Locale
 
 /** AliyunPushPlugin */
 class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
@@ -92,6 +93,7 @@ class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
             "bindPhoneNumber" -> bindPhoneNumber(call, result)
             "unbindPhoneNumber" -> unbindPhoneNumber(result)
             "setNotificationInGroup" -> setNotificationInGroup(call, result)
+            "setBadgeNum" -> setBadgeNum(call, result)
             "clearNotifications" -> clearNotifications(result)
             "createChannel" -> createChannel(call, result)
             "createChannelGroup" -> createChannelGroup(call, result)
@@ -618,6 +620,38 @@ class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
         }
     }
 
+    // 设置角标数，仅支持华为、荣耀、vivo 厂商通道
+    private fun setBadgeNum(call: MethodCall, result: Result) {
+        val badgeNum = call.argument<Int>("badgeNum")
+        val map = HashMap<String, String>()
+
+        if (badgeNum == null || badgeNum < 0) {
+            map[CODE_KEY] = CODE_PARAM_ILLEGAL
+            map[ERROR_MSG_KEY] = "badgeNum must be a non-negative integer"
+        } else if (!isBadgeSupportedDevice()) {
+            map[CODE_KEY] = CODE_NOT_SUPPORT
+            map[ERROR_MSG_KEY] =
+                "Badge count is only supported on Huawei, Honor and vivo devices"
+        } else {
+            val pushService = PushServiceFactory.getCloudPushService()
+
+            try {
+                pushService.setBadgeNum(mContext, badgeNum)
+                map[CODE_KEY] = CODE_SUCCESS
+            } catch (e: Exception) {
+                map[CODE_KEY] = CODE_FAILED
+                map[ERROR_MSG_KEY] = e.message ?: "Set badge num failed"
+                AliyunPushLog.e(TAG, Log.getStackTraceString(e))
+            }
+        }
+
+        try {
+            result.success(map)
+        } catch (e: Exception) {
+            AliyunPushLog.e(TAG, Log.getStackTraceString(e))
+        }
+    }
+
     // 删除所有通知
     private fun clearNotifications(result: Result) {
         val pushService = PushServiceFactory.getCloudPushService()
@@ -895,5 +929,15 @@ class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
                 }
             }
         })
+    }
+
+    private fun isBadgeSupportedDevice(): Boolean {
+        val manufacturer = Build.MANUFACTURER.lowercase(Locale.ROOT)
+        val brand = Build.BRAND.lowercase(Locale.ROOT)
+        val vendorNames = listOf(manufacturer, brand)
+
+        return vendorNames.any {
+            it.contains("huawei") || it.contains("honor") || it.contains("vivo")
+        }
     }
 }

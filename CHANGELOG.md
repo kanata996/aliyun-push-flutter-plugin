@@ -1,16 +1,27 @@
+## 1.3.7
+
+- 新增 Android 数字角标接口 `setAndroidBadgeNum`
+- Android 插件内置角标所需的华为、vivo 权限声明
+- 废弃 iOS `turnOnIOSDebug` 包装接口，改为推荐使用 `setIOSLogLevel(4)`
+- 更新 README 和 example，补充 Android 角标使用说明
+
 ## 1.3.6
+
 - Android 适配16KB内存页面大小
 - Android SDK 升级至 3.10.1
 - iOS SDK 升级至 3.2.3
 
 ## 1.3.4
+
 - 优化iOS推送通知处理逻辑
 
 ## 1.3.3
+
 - 修复阿里云官方移除 iOS SDK 3.1.1 导致不能安装问题，改为不依赖指定版本
 - Android SDK 升级至 3.9.5
 
 ## 1.3.2
+
 - 修复点击推送通知冷启动App时onNotificationOpened无效的问题
 - Android SDK 升级至 3.9.4.1
 - iOS SDK 升级至 3.1.1

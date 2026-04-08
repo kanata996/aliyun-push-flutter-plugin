@@ -201,6 +201,11 @@ class AliyunPushFlutter {
     return AliyunPushFlutterPlatform.instance.setAndroidLogLevel(level);
   }
 
+  /// Android 设置角标数
+  Future<Map<dynamic, dynamic>> setAndroidBadgeNum(int num) async {
+    return AliyunPushFlutterPlatform.instance.setAndroidBadgeNum(num);
+  }
+
   /// 设置角标数
   Future<Map<dynamic, dynamic>> setIOSBadgeNum(int num) async {
     return AliyunPushFlutterPlatform.instance.setIOSBadgeNum(num);
@@ -227,8 +232,9 @@ class AliyunPushFlutter {
     return AliyunPushFlutterPlatform.instance.syncIOSBadgeNum(num);
   }
 
-  /// 开启iOS Debug日志
-  @Deprecated("This method is deprecated in the AlicloudPush iOS SDK.")
+  /// 已废弃，请改用 setIOSLogLevel(4) 开启 iOS Debug 日志。
+  @Deprecated(
+      "Use setIOSLogLevel(4) instead. The underlying iOS SDK turnOnDebug API is deprecated.")
   Future<Map<dynamic, dynamic>> turnOnIOSDebug() async {
     return AliyunPushFlutterPlatform.instance.turnOnIOSDebug();
   }
