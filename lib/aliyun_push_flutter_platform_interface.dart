@@ -69,6 +69,11 @@ abstract class AliyunPushFlutterPlatform extends PlatformInterface {
     throw UnimplementedError('setAndroidLogLevel() has not been implemented.');
   }
 
+  /// Android 设置角标数
+  Future<Map<dynamic, dynamic>> setAndroidBadgeNum(int num) async {
+    throw UnimplementedError('setAndroidBadgeNum() has not been implemented.');
+  }
+
   /// 绑定账号
   Future<Map<dynamic, dynamic>> bindAccount(String account) async {
     throw UnimplementedError('bindAccount() has not been implemented.');

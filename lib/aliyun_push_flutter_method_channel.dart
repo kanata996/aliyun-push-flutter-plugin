@@ -322,6 +322,20 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
   }
 
   @override
+  Future<Map<dynamic, dynamic>> setAndroidBadgeNum(int num) async {
+    if (!Platform.isAndroid) {
+      return {
+        'code': kAliyunPushOnlyAndroid,
+        'errorMsg': 'Only support Android',
+      };
+    }
+
+    Map<dynamic, dynamic> result =
+        await methodChannel.invokeMethod('setBadgeNum', {'badgeNum': num});
+    return result;
+  }
+
+  @override
   Future<Map<dynamic, dynamic>> setIOSBadgeNum(int num) async {
     if (!Platform.isIOS) {
       return {

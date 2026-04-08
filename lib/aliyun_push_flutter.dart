@@ -201,6 +201,11 @@ class AliyunPushFlutter {
     return AliyunPushFlutterPlatform.instance.setAndroidLogLevel(level);
   }
 
+  /// Android 设置角标数
+  Future<Map<dynamic, dynamic>> setAndroidBadgeNum(int num) async {
+    return AliyunPushFlutterPlatform.instance.setAndroidBadgeNum(num);
+  }
+
   /// 设置角标数
   Future<Map<dynamic, dynamic>> setIOSBadgeNum(int num) async {
     return AliyunPushFlutterPlatform.instance.setIOSBadgeNum(num);

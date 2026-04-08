@@ -16,6 +16,7 @@ class _AndroidPageState extends BaseState<AndroidPage> {
   final _aliyunPush = AliyunPushFlutter();
 
   final TextEditingController _addPhoneController = TextEditingController();
+  final TextEditingController _badgeController = TextEditingController();
   final TextEditingController _channelController = TextEditingController();
 
   String _boundPhone = "";
@@ -45,6 +46,7 @@ class _AndroidPageState extends BaseState<AndroidPage> {
     super.dispose();
 
     _addPhoneController.dispose();
+    _badgeController.dispose();
     _channelController.dispose();
   }
 
@@ -224,6 +226,53 @@ class _AndroidPageState extends BaseState<AndroidPage> {
         }
       },
       child: const Text('清除所有通知'),
+    ));
+
+    children.add(TextField(
+      autofocus: false,
+      decoration: const InputDecoration(
+        labelText: "角标数量",
+        hintText: "输入非负整数，0 表示清除角标",
+      ),
+      controller: _badgeController,
+      keyboardType: TextInputType.number,
+    ));
+
+    children.add(FilledButton(
+      onPressed: () async {
+        var badge = int.tryParse(_badgeController.text);
+        if (badge == null || badge < 0) {
+          showWarningDialog('请输入非负整数角标数量');
+          return;
+        }
+
+        var result = await _aliyunPush.setAndroidBadgeNum(badge);
+        var code = result['code'];
+        if (code == kAliyunPushSuccessCode) {
+          showOkDialog('设置角标数量 $badge 成功');
+        } else {
+          var errorCode = result['code'];
+          var errorMsg = result['errorMsg'];
+          showErrorDialog('设置角标失败: $errorCode - $errorMsg');
+        }
+      },
+      child: const Text('设置角标数量'),
+    ));
+
+    children.add(FilledButton(
+      onPressed: () async {
+        var result = await _aliyunPush.setAndroidBadgeNum(0);
+        var code = result['code'];
+        if (code == kAliyunPushSuccessCode) {
+          _badgeController.text = '0';
+          showOkDialog('清除角标成功');
+        } else {
+          var errorCode = result['code'];
+          var errorMsg = result['errorMsg'];
+          showErrorDialog('清除角标失败: $errorCode - $errorMsg');
+        }
+      },
+      child: const Text('清除角标'),
     ));
 
     children.add(TextField(

@@ -1,3 +1,8 @@
+## Unreleased
+- 新增 Android 数字角标接口 `setAndroidBadgeNum`
+- Android 插件内置角标所需的华为、vivo 权限声明
+- 更新 README 和 example，补充 Android 角标使用说明
+
 ## 1.3.6
 - Android 适配16KB内存页面大小
 - Android SDK 升级至 3.10.1

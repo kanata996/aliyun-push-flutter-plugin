@@ -6,6 +6,8 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 class MockAliyunPushFlutterPlatform
     with MockPlatformInterfaceMixin
     implements AliyunPushFlutterPlatform {
+  int? androidBadgeNum;
+
   @override
   Future<Map> addAlias(String alias) {
     // TODO: implement addAlias
@@ -147,6 +149,12 @@ class MockAliyunPushFlutterPlatform
   }
 
   @override
+  Future<Map> setAndroidBadgeNum(int num) async {
+    androidBadgeNum = num;
+    return {'code': kAliyunPushSuccessCode};
+  }
+
+  @override
   Future<Map> setIOSBadgeNum(int num) {
     // TODO: implement setIOSBadgeNum
     throw UnimplementedError();
@@ -225,4 +233,22 @@ class MockAliyunPushFlutterPlatform
   }
 }
 
-void main() {}
+void main() {
+  final AliyunPushFlutterPlatform initialPlatform =
+      AliyunPushFlutterPlatform.instance;
+
+  test('setAndroidBadgeNum delegates to the platform interface', () async {
+    final fakePlatform = MockAliyunPushFlutterPlatform();
+    AliyunPushFlutterPlatform.instance = fakePlatform;
+
+    final plugin = AliyunPushFlutter();
+    final result = await plugin.setAndroidBadgeNum(7);
+
+    expect(result['code'], kAliyunPushSuccessCode);
+    expect(fakePlatform.androidBadgeNum, 7);
+  });
+
+  tearDown(() {
+    AliyunPushFlutterPlatform.instance = initialPlatform;
+  });
+}
