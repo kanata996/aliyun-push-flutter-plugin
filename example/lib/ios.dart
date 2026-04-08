@@ -33,7 +33,7 @@ class _IOSPageState extends BaseState<IOSPage> {
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.turnOnIOSDebug();
+        var result = await _aliyunPush.setIOSLogLevel(4);
         var code = result['code'];
         if (code == kAliyunPushSuccessCode) {
           showOkDialog('打开Debug日志成功');
