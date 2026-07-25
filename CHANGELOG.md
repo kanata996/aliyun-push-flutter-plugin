@@ -4,6 +4,9 @@
 - 命令 API 统一返回 `Future<void>`，查询 API 直接返回 `String`、`bool`、`List<String>` 或 `AliyunPushChannelStatus`
 - 新增 `AliyunPushException`，统一表示原生 SDK、平台限制、无效响应和 MethodChannel 失败
 - Android 与 iOS 的别名、标签查询结果统一为 `List<String>`
+- 新增设备标签标准接口 `bindDeviceTag`、`unbindDeviceTag`、`listDeviceTags`
+- 废弃旧标签接口 `bindTag`、`unbindTag`、`listTags`
+- 废弃账号和别名标签目标常量 `kAliyunTargetAccount`、`kAliyunTargetAlias`
 - 平台专用 API 在错误平台调用时不再返回空值或 `false`，改为抛出 `AliyunPushException`
 - `jumpToAndroidNotificationSettings` 和 `setPluginLogEnabled` 改为可等待的 `Future<void>`
 - **Breaking:** Android 通知回调中的 `extraMap` 统一为 Map；点击回调中的 JSON 字符串会自动解析

@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use_from_same_package
+
 import 'package:aliyun_push_flutter/aliyun_push_flutter.dart';
 import 'package:aliyun_push_flutter/aliyun_push_flutter_method_channel.dart';
 import 'package:aliyun_push_flutter/aliyun_push_flutter_platform_interface.dart';
@@ -59,6 +61,11 @@ class MockAliyunPushFlutterPlatform
   @override
   Future<void> bindAccount(String account) {
     return _recordVoid('bindAccount', account);
+  }
+
+  @override
+  Future<void> bindDeviceTag(List<String> tags) {
+    return _recordVoid('bindDeviceTag', tags);
   }
 
   @override
@@ -197,6 +204,12 @@ class MockAliyunPushFlutterPlatform
   }
 
   @override
+  Future<List<String>> listDeviceTags() async {
+    _record('listDeviceTags');
+    return listResult;
+  }
+
+  @override
   Future<List<String>> listTags({
     int target = kAliyunTargetDevice,
   }) async {
@@ -267,6 +280,11 @@ class MockAliyunPushFlutterPlatform
   @override
   Future<void> unbindAccount() {
     return _recordVoid('unbindAccount');
+  }
+
+  @override
+  Future<void> unbindDeviceTag(List<String> tags) {
+    return _recordVoid('unbindDeviceTag', tags);
   }
 
   @override
@@ -462,7 +480,21 @@ void main() {
     await expectListCall(plugin.listAlias(), 'listAlias');
   });
 
-  test('forwards tag operations and default targets', () async {
+  test('forwards device tag operations', () async {
+    await expectVoidCall(
+      plugin.bindDeviceTag(['tag-a']),
+      'bindDeviceTag',
+      ['tag-a'],
+    );
+    await expectVoidCall(
+      plugin.unbindDeviceTag(['tag-b']),
+      'unbindDeviceTag',
+      ['tag-b'],
+    );
+    await expectListCall(plugin.listDeviceTags(), 'listDeviceTags');
+  });
+
+  test('keeps forwarding deprecated tag operations', () async {
     await expectVoidCall(
       plugin.bindTag(['tag-a']),
       'bindTag',

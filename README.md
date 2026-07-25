@@ -279,7 +279,7 @@ Other Linker Flags 中设定链接器参数-ObjC，加载二进制文件时，�
 ```dart
 try {
   await aliyunPush.bindAccount("account");
-  final tags = await aliyunPush.listTags();
+  final tags = await aliyunPush.listDeviceTags();
   print(tags);
 } on AliyunPushException catch (error) {
   print("${error.operation}: ${error.code} - ${error.message}");
@@ -306,11 +306,17 @@ try {
 | `addAlias(alias)` | `Future<void>` | 添加别名 |
 | `removeAlias(alias)` | `Future<void>` | 移除别名 |
 | `listAlias()` | `Future<List<String>>` | 查询别名列表 |
-| `bindTag(tags, {target, alias})` | `Future<void>` | 绑定标签 |
-| `unbindTag(tags, {target, alias})` | `Future<void>` | 解绑标签 |
-| `listTags({target})` | `Future<List<String>>` | 查询标签列表 |
+| `bindDeviceTag(tags)` | `Future<void>` | 绑定设备标签 |
+| `unbindDeviceTag(tags)` | `Future<void>` | 解绑设备标签 |
+| `listDeviceTags()` | `Future<List<String>>` | 查询设备标签列表 |
+| `bindTag(tags, {target, alias})` | `Future<void>` | 已废弃，请使用 `bindDeviceTag` |
+| `unbindTag(tags, {target, alias})` | `Future<void>` | 已废弃，请使用 `unbindDeviceTag` |
+| `listTags({target})` | `Future<List<String>>` | 已废弃，请使用 `listDeviceTags` |
 
-`listAlias()` 和 `listTags()` 会将 Android 返回的逗号分隔字符串与 iOS 返回的数组统一为不可变的 `List<String>`。
+`listAlias()` 和 `listDeviceTags()` 会将 Android 返回的逗号分隔字符串与 iOS 返回的数组统一为不可变的 `List<String>`。
+
+账号和别名维度的标签操作不再建议使用。`bindTag`、`unbindTag`、`listTags` 以及
+`kAliyunTargetAccount`、`kAliyunTargetAlias` 暂时保留用于兼容现有应用，后续版本可能移除。
 
 ### Android API
 
@@ -398,7 +404,7 @@ final result = await aliyunPush.listTags();
 final tags = result["tagsList"];
 
 // 1.5.0
-final tags = await aliyunPush.listTags();
+final tags = await aliyunPush.listDeviceTags();
 ```
 
 需要处理失败时捕获 `AliyunPushException`，不再读取 `errorMsg`。

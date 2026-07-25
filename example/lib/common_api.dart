@@ -19,8 +19,6 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
   final TextEditingController _removeAliasController = TextEditingController();
   final TextEditingController _addTagController = TextEditingController();
   final TextEditingController _removeTagController = TextEditingController();
-  final TextEditingController _addAccountTagCtr = TextEditingController();
-  final TextEditingController _removeAccountTagCtr = TextEditingController();
 
   String _boundAccount = "";
 
@@ -35,7 +33,6 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
             _accountBuilder(),
             _aliasBuilder(),
             _deviceBuilder(),
-            _accountTagBuilder(),
           ],
         ),
       ),
@@ -51,8 +48,6 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
     _removeAliasController.dispose();
     _addTagController.dispose();
     _removeTagController.dispose();
-    _addAccountTagCtr.dispose();
-    _removeAccountTagCtr.dispose();
   }
 
   Widget _accountBuilder() {
@@ -109,85 +104,6 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
         }
       },
       child: const Text('解绑账号'),
-    ));
-
-    return cardBuilder(Column(children: children));
-  }
-
-  Widget _accountTagBuilder() {
-    final List<Widget> children = [];
-
-    children.add(titleBuilder('账号标签添加/删除'));
-    children.add(const SizedBox(height: 20));
-
-    children.add(TextField(
-      autofocus: false,
-      decoration: const InputDecoration(
-        labelText: '添加账号标签',
-        hintText: '添加账号标签',
-      ),
-      controller: _addAccountTagCtr,
-    ));
-
-    children.add(FilledButton(
-      onPressed: () async {
-        var tag = _addAccountTagCtr.text;
-        if (tag.isNotEmpty) {
-          List<String> tags = [];
-          tags.add(tag);
-
-          try {
-            await _aliyunPush.bindTag(
-              tags,
-              target: kAliyunTargetAccount,
-            );
-            showOkDialog('添加账号标签$tag成功');
-            _addAccountTagCtr.clear();
-          } on AliyunPushException catch (error) {
-            showErrorDialog(
-              '添加账号标签$tag失败: ${error.code} - ${error.message}',
-            );
-          }
-        } else {
-          showWarningDialog('请输入要添加的账号标签');
-        }
-      },
-      child: const Text('添加账号标签'),
-    ));
-
-    children.add(TextField(
-      autofocus: false,
-      decoration: const InputDecoration(
-        labelText: '删除账号标签',
-        hintText: '删除账号标签',
-      ),
-      controller: _removeAccountTagCtr,
-    ));
-
-    children.add(FilledButton(
-      onPressed: () async {
-        var tag = _removeAccountTagCtr.text;
-        if (tag.isNotEmpty) {
-          List<String> tags = [];
-          tags.add(tag);
-
-          try {
-            await _aliyunPush.unbindTag(
-              tags,
-              target: kAliyunTargetAccount,
-            );
-            showOkDialog('删除账号标签$tag成功');
-            _removeAccountTagCtr.clear();
-          } on AliyunPushException catch (error) {
-            showErrorDialog(
-              '删除账号标签$tag失败: ${error.code} - ${error.message}',
-            );
-          }
-        } else {
-          showWarningDialog('请输入要删除的账号标签');
-        }
-      },
-      child: const Text('删除账号标签'),
     ));
 
     return cardBuilder(Column(children: children));
@@ -297,10 +213,7 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
           tags.add(tag);
 
           try {
-            await _aliyunPush.bindTag(
-              tags,
-              target: kAliyunTargetDevice,
-            );
+            await _aliyunPush.bindDeviceTag(tags);
             showOkDialog('添加设备标签$tag成功');
             _addTagController.clear();
           } on AliyunPushException catch (error) {
@@ -332,10 +245,7 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
           tags.add(tag);
 
           try {
-            await _aliyunPush.unbindTag(
-              tags,
-              target: kAliyunTargetDevice,
-            );
+            await _aliyunPush.unbindDeviceTag(tags);
             showOkDialog('删除设备标签$tag成功');
             _removeTagController.clear();
           } on AliyunPushException catch (error) {
@@ -353,7 +263,7 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
     children.add(FilledButton(
       onPressed: () async {
         try {
-          var tagList = await _aliyunPush.listTags(target: kAliyunTargetDevice);
+          var tagList = await _aliyunPush.listDeviceTags();
           showOkDialog('查询设备标签列表成功: $tagList');
         } on AliyunPushException catch (error) {
           showErrorDialog(

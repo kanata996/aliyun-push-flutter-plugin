@@ -250,6 +250,47 @@ void main() {
     await platform.bindAccount('user');
   });
 
+  test('maps device tag APIs to the existing native channel methods', () async {
+    final calls = <MethodCall>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call);
+      if (call.method == 'listTags') {
+        return {
+          'code': kAliyunPushSuccessCode,
+          'tagsList': 'alpha,beta',
+        };
+      }
+      return {'code': kAliyunPushSuccessCode};
+    });
+
+    await platform.bindDeviceTag(['alpha']);
+    await platform.unbindDeviceTag(['beta']);
+    expect(await platform.listDeviceTags(), ['alpha', 'beta']);
+
+    expect(calls, [
+      isMethodCall(
+        'bindTag',
+        arguments: {
+          'tags': ['alpha'],
+          'target': kAliyunTargetDevice,
+          'alias': null,
+        },
+      ),
+      isMethodCall(
+        'unbindTag',
+        arguments: {
+          'tags': ['beta'],
+          'target': kAliyunTargetDevice,
+          'alias': null,
+        },
+      ),
+      isMethodCall(
+        'listTags',
+        arguments: {'target': kAliyunTargetDevice},
+      ),
+    ]);
+  });
+
   test('throws AliyunPushException when the native result fails', () async {
     messenger.setMockMethodCallHandler(channel, (_) async {
       return {'code': 'PUSH_10107', 'errorMsg': 'network unavailable'};

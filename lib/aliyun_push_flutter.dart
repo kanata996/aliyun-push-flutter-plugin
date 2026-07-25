@@ -58,9 +58,13 @@ const kAliyunPushParamsIllegal = "10001";
 const kAliyunPushSuccessCode = "10000";
 
 /// 本设备绑定账号
+@Deprecated(
+    'Account tags are no longer recommended. Use the device tag APIs instead.')
 const kAliyunTargetAccount = 2;
 
 /// 别名
+@Deprecated(
+    'Alias tags are no longer recommended. Use the device tag APIs instead.')
 const kAliyunTargetAlias = 3;
 
 /// 本设备
@@ -113,7 +117,15 @@ class AliyunPushFlutter {
     return AliyunPushFlutterPlatform.instance.bindPhoneNumber(phone);
   }
 
-  /// 添加标签
+  /// 绑定设备标签。
+  Future<void> bindDeviceTag(List<String> tags) async {
+    return AliyunPushFlutterPlatform.instance.bindDeviceTag(tags);
+  }
+
+  /// 添加标签。
+  ///
+  /// 已废弃，请改用 [bindDeviceTag]。账号和别名维度的标签操作不再建议使用。
+  @Deprecated('Use bindDeviceTag instead.')
   Future<void> bindTag(List<String> tags,
       {int target = kAliyunTargetDevice, String? alias}) async {
     return AliyunPushFlutterPlatform.instance
@@ -220,7 +232,15 @@ class AliyunPushFlutter {
     return AliyunPushFlutterPlatform.instance.listAlias();
   }
 
-  /// 查询标签列表
+  /// 查询当前设备绑定的标签。
+  Future<List<String>> listDeviceTags() async {
+    return AliyunPushFlutterPlatform.instance.listDeviceTags();
+  }
+
+  /// 查询标签列表。
+  ///
+  /// 已废弃，请改用 [listDeviceTags]。
+  @Deprecated('Use listDeviceTags instead.')
   Future<List<String>> listTags({int target = kAliyunTargetDevice}) async {
     return AliyunPushFlutterPlatform.instance.listTags(target: target);
   }
@@ -288,7 +308,15 @@ class AliyunPushFlutter {
     return AliyunPushFlutterPlatform.instance.unbindPhoneNumber();
   }
 
-  /// 移除标签
+  /// 解绑设备标签。
+  Future<void> unbindDeviceTag(List<String> tags) async {
+    return AliyunPushFlutterPlatform.instance.unbindDeviceTag(tags);
+  }
+
+  /// 移除标签。
+  ///
+  /// 已废弃，请改用 [unbindDeviceTag]。账号和别名维度的标签操作不再建议使用。
+  @Deprecated('Use unbindDeviceTag instead.')
   Future<void> unbindTag(List<String> tags,
       {int target = kAliyunTargetDevice, String? alias}) async {
     return AliyunPushFlutterPlatform.instance

@@ -99,19 +99,40 @@ abstract class AliyunPushFlutterPlatform extends PlatformInterface {
     throw UnimplementedError('listAlias() has not been implemented.');
   }
 
-  /// 添加标签
+  /// 绑定设备标签。
+  Future<void> bindDeviceTag(List<String> tags) {
+    // ignore: deprecated_member_use_from_same_package
+    return bindTag(tags, target: kAliyunTargetDevice);
+  }
+
+  /// 添加标签。
+  @Deprecated('Use bindDeviceTag instead.')
   Future<void> bindTag(List<String> tags,
       {int target = kAliyunTargetDevice, String? alias}) async {
     throw UnimplementedError('bindTag() has not been implemented.');
   }
 
-  /// 移除标签
+  /// 解绑设备标签。
+  Future<void> unbindDeviceTag(List<String> tags) {
+    // ignore: deprecated_member_use_from_same_package
+    return unbindTag(tags, target: kAliyunTargetDevice);
+  }
+
+  /// 移除标签。
+  @Deprecated('Use unbindDeviceTag instead.')
   Future<void> unbindTag(List<String> tags,
       {int target = kAliyunTargetDevice, String? alias}) async {
     throw UnimplementedError('unbindTag() has not been implemented.');
   }
 
-  /// 查询标签列表
+  /// 查询当前设备绑定的标签。
+  Future<List<String>> listDeviceTags() {
+    // ignore: deprecated_member_use_from_same_package
+    return listTags(target: kAliyunTargetDevice);
+  }
+
+  /// 查询标签列表。
+  @Deprecated('Use listDeviceTags instead.')
   Future<List<String>> listTags({int target = kAliyunTargetDevice}) async {
     throw UnimplementedError('listTags() has not been implemented.');
   }
