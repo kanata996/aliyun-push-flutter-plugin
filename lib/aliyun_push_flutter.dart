@@ -3,14 +3,41 @@ import 'aliyun_push_flutter_platform_interface.dart';
 /// 失败
 const kAliyunPushFailedCode = "10002";
 
-/// LogLevel debug
-const kAliyunPushLogLevelDebug = 2;
+/// Android LogLevel error
+const kAliyunPushAndroidLogLevelError = 0;
 
-/// LogLevel error
-const kAliyunPushLogLevelError = 0;
+/// Android LogLevel info
+const kAliyunPushAndroidLogLevelInfo = 1;
 
-/// LogLevel info
-const kAliyunPushLogLevelInfo = 1;
+/// Android LogLevel debug
+const kAliyunPushAndroidLogLevelDebug = 2;
+
+/// iOS LogLevel none
+const kAliyunPushIOSLogLevelNone = 0;
+
+/// iOS LogLevel error
+const kAliyunPushIOSLogLevelError = 1;
+
+/// iOS LogLevel warn
+const kAliyunPushIOSLogLevelWarn = 2;
+
+/// iOS LogLevel info
+const kAliyunPushIOSLogLevelInfo = 3;
+
+/// iOS LogLevel debug
+const kAliyunPushIOSLogLevelDebug = 4;
+
+/// Android LogLevel debug
+@Deprecated('Use kAliyunPushAndroidLogLevelDebug instead.')
+const kAliyunPushLogLevelDebug = kAliyunPushAndroidLogLevelDebug;
+
+/// Android LogLevel error
+@Deprecated('Use kAliyunPushAndroidLogLevelError instead.')
+const kAliyunPushLogLevelError = kAliyunPushAndroidLogLevelError;
+
+/// Android LogLevel info
+@Deprecated('Use kAliyunPushAndroidLogLevelInfo instead.')
+const kAliyunPushLogLevelInfo = kAliyunPushAndroidLogLevelInfo;
 
 /// 不支持
 const kAliyunPushNotSupport = "10005";
@@ -36,7 +63,13 @@ const kAliyunTargetAlias = 3;
 /// 本设备
 const kAliyunTargetDevice = 1;
 
+/// 阿里云推送插件入口。
+///
+/// 所有实例共享同一个平台实现和消息回调注册状态。
 class AliyunPushFlutter {
+  /// 注册消息回调。
+  ///
+  /// 再次调用会替换此前注册的全部回调，未传入的回调会被清空。
   void addMessageReceiver({
     PushCallback? onNotification,
     PushCallback? onMessage,

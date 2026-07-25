@@ -1,6 +1,5 @@
 package com.aliyun.ams.push
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Application
 import android.app.NotificationChannel
@@ -29,6 +28,7 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import java.io.File
 import java.util.Locale
+import java.util.ArrayDeque
 
 /** AliyunPushPlugin */
 class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
@@ -42,36 +42,73 @@ class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
 
         private const val CODE_KEY = "code"
         private const val ERROR_MSG_KEY = "errorMsg"
+        private const val MAX_PENDING_METHOD_CALLS = 100
 
-        @SuppressLint("StaticFieldLeak")
-        lateinit var sInstance: AliyunPushPlugin
+        private data class PendingMethodCall(
+            val method: String,
+            val arguments: Map<String, Any>?
+        )
+
+        private val pendingLock = Any()
+        private val pendingMethodCalls = ArrayDeque<PendingMethodCall>()
+        private var instance: AliyunPushPlugin? = null
+
+        internal fun callFlutterMethod(method: String, arguments: Map<String, Any>?) {
+            if (TextUtils.isEmpty(method)) {
+                return
+            }
+
+            val target = synchronized(pendingLock) {
+                val current = instance
+                if (current?.receiverReady == true && current.channel != null) {
+                    current
+                } else {
+                    if (pendingMethodCalls.size >= MAX_PENDING_METHOD_CALLS) {
+                        val droppedCall = pendingMethodCalls.removeFirst()
+                        AliyunPushLog.e(
+                            TAG,
+                            "Pending callback queue is full; dropping ${droppedCall.method}"
+                        )
+                    }
+                    pendingMethodCalls.addLast(PendingMethodCall(method, arguments))
+                    null
+                }
+            }
+
+            target?.invokeFlutterMethod(method, arguments)
+        }
     }
 
     /// The MethodChannel that will the communication between Flutter and native Android
     ///
     /// This local reference serves to register the plugin with the Flutter Engine and unregister it
     /// when the Flutter Engine is detached from the Activity
-    private lateinit var channel: MethodChannel
+    private var channel: MethodChannel? = null
     private lateinit var mContext: Context
+    private var receiverReady = false
 
-    init {
-        sInstance = this
-    }
-
-    fun callFlutterMethod(method: String, arguments: Map<String, Any>?) {
-        if (TextUtils.isEmpty(method)) {
-            return
-        }
-
+    private fun invokeFlutterMethod(method: String, arguments: Map<String, Any>?) {
         Handler(Looper.getMainLooper()).post {
-            channel.invokeMethod(method, arguments)
+            val methodChannel = synchronized(pendingLock) {
+                if (instance === this && receiverReady) channel else null
+            }
+            if (methodChannel != null) {
+                methodChannel.invokeMethod(method, arguments)
+            } else {
+                callFlutterMethod(method, arguments)
+            }
         }
     }
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "aliyun_push")
-        channel.setMethodCallHandler(this)
+        val methodChannel = MethodChannel(flutterPluginBinding.binaryMessenger, "aliyun_push")
+        methodChannel.setMethodCallHandler(this)
         mContext = flutterPluginBinding.applicationContext
+        synchronized(pendingLock) {
+            channel = methodChannel
+            receiverReady = false
+            instance = this
+        }
     }
 
     override fun onMethodCall(call: MethodCall, result: Result) {
@@ -101,15 +138,36 @@ class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
             "turnOnPushChannel" -> turnOnPushChannel(result)
             "turnOffPushChannel" -> turnOffPushChannel(result)
             "isNotificationEnabled" -> isNotificationEnabled(call, result)
+            "messageReceiverReady" -> {
+                synchronized(pendingLock) {
+                    receiverReady = true
+                    while (pendingMethodCalls.isNotEmpty()) {
+                        val pendingCall = pendingMethodCalls.removeFirst()
+                        invokeFlutterMethod(pendingCall.method, pendingCall.arguments)
+                    }
+                }
+                result.success(null)
+            }
             "jumpToNotificationSettings" -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    jumpToAndroidNotificationSettings(call)
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        jumpToAndroidNotificationSettings(call)
+                    } else {
+                        jumpToAndroidApplicationSettings()
+                    }
+                    result.success(null)
+                } catch (e: Exception) {
+                    AliyunPushLog.e(TAG, Log.getStackTraceString(e))
+                    result.error(CODE_FAILED, e.message, null)
                 }
             }
             "setPluginLogEnabled" -> {
                 val enabled = call.argument<Boolean>("enabled")
                 if (enabled != null) {
                     AliyunPushLog.setLogEnabled(enabled)
+                    result.success(null)
+                } else {
+                    result.error(CODE_PARAM_ILLEGAL, "enabled is empty", null)
                 }
             }
             else -> result.notImplemented()
@@ -117,7 +175,14 @@ class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        channel.setMethodCallHandler(null)
+        channel?.setMethodCallHandler(null)
+        synchronized(pendingLock) {
+            if (instance === this) {
+                instance = null
+            }
+            receiverReady = false
+            channel = null
+        }
     }
 
     // 注册推送通道
@@ -670,10 +735,17 @@ class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
     // 创建通知通道
     private fun createChannel(call: MethodCall, result: Result) {
         val map = HashMap<String, String>()
+        val id = call.argument<String>("id")
+        val name = call.argument<String>("name")
+
+        if (id.isNullOrEmpty() || name.isNullOrEmpty()) {
+            map[CODE_KEY] = CODE_PARAM_ILLEGAL
+            map[ERROR_MSG_KEY] = "channel id and name can not be empty"
+            result.success(map)
+            return
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val id = call.argument<String>("id")
-            val name = call.argument<String>("name")
             val importance = call.argument<Int>("importance")
             val desc = call.argument<String>("desc")
 
@@ -687,7 +759,7 @@ class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
             val soundContentType = call.argument<Int?>("soundContentType")
             val soundFlag = call.argument<Int?>("soundFlag")
             val vibration = call.argument<Boolean?>("vibration")
-            val vibrationPattern = call.argument<List<Long>?>("vibrationPattern")
+            val vibrationPattern = call.argument<List<Number>?>("vibrationPattern")
 
             val notificationManager = mContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val importanceValue = importance ?: NotificationManager.IMPORTANCE_DEFAULT
@@ -725,7 +797,7 @@ class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
                 vibrationPattern?.let {
                     val pattern = LongArray(it.size)
                     for (i in it.indices) {
-                        pattern[i] = it[i]
+                        pattern[i] = it[i].toLong()
                     }
                     setVibrationPattern(pattern)
                 }
@@ -754,9 +826,17 @@ class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
     // 创建通知通道的分组
     private fun createChannelGroup(call: MethodCall, result: Result) {
         val map = HashMap<String, String>()
+        val id = call.argument<String?>("id")
+        val name = call.argument<String?>("name")
+
+        if (id.isNullOrEmpty() || name.isNullOrEmpty()) {
+            map[CODE_KEY] = CODE_PARAM_ILLEGAL
+            map[ERROR_MSG_KEY] = "channel group id and name can not be empty"
+            result.success(map)
+            return
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val id = call.argument<String?>("id")
-            val name = call.argument<String?>("name")
             val desc = call.argument<String?>("desc")
 
             val notificationManager = mContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -803,6 +883,7 @@ class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
                 if (channel.id == id) {
                     if (channel.importance == NotificationManager.IMPORTANCE_NONE) {
                         result.success(false)
+                        return
                     } else {
                         if (channel.group != null) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -826,7 +907,7 @@ class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun jumpToAndroidNotificationSettings(call: MethodCall) {
         val id: String? = call.argument<String?>("id")
-        val intent = if (id!=null) {
+        val intent = if (!id.isNullOrEmpty()) {
             Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
                 putExtra(Settings.EXTRA_APP_PACKAGE, mContext.packageName)
                 putExtra(Settings.EXTRA_CHANNEL_ID, id)
@@ -839,6 +920,14 @@ class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
 
         if (mContext !is Activity) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        mContext.startActivity(intent)
+    }
+
+    private fun jumpToAndroidApplicationSettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.parse("package:${mContext.packageName}")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         mContext.startActivity(intent)
     }

@@ -1,7 +1,5 @@
 package com.aliyun.ams.push
 
-import android.os.Handler
-import android.os.Looper
 import android.content.Intent
 import android.os.Bundle
 import com.alibaba.sdk.android.push.AndroidPopupActivity
@@ -31,9 +29,7 @@ class PushPopupActivity : AndroidPopupActivity() {
                 "extraMap" to extMap
             )
 
-            Handler(Looper.getMainLooper()).postDelayed({
-                AliyunPushPlugin.sInstance.callFlutterMethod("onNotificationOpened", arguments)
-            }, 1000)
+            AliyunPushPlugin.callFlutterMethod("onNotificationOpened", arguments)
         } catch (e: Exception){
             AliyunPushLog.e(TAG, "打开通知出错: $e")
         }

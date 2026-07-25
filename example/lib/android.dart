@@ -147,11 +147,11 @@ class _AndroidPageState extends BaseState<AndroidPage> {
       onPressed: () async {
         int logLevel;
         if (_selectedLogLevel == 'ERROR') {
-          logLevel = kAliyunPushLogLevelError;
+          logLevel = kAliyunPushAndroidLogLevelError;
         } else if (_selectedLogLevel == 'INFO') {
-          logLevel = kAliyunPushLogLevelInfo;
+          logLevel = kAliyunPushAndroidLogLevelInfo;
         } else {
-          logLevel = kAliyunPushLogLevelDebug;
+          logLevel = kAliyunPushAndroidLogLevelDebug;
         }
 
         var result = await _aliyunPush.setAndroidLogLevel(logLevel);
