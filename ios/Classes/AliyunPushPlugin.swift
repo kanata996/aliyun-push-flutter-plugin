@@ -54,10 +54,11 @@ public class AliyunPushPlugin: NSObject, FlutterPlugin, UNUserNotificationCenter
     ) {
         CloudPushSDK.registerDevice(deviceToken) { res in
             if res.success {
+                let apnsDeviceToken = CloudPushSDK.getApnsDeviceToken() ?? ""
                 AliyunPushLog.d(
                     "Register deviceToken successfully, deviceToken: %@",
-                    CloudPushSDK.getApnsDeviceToken() ?? "")
-                let dic = ["apnsDeviceToken": CloudPushSDK.getApnsDeviceToken()]
+                    apnsDeviceToken)
+                let dic = ["apnsDeviceToken": apnsDeviceToken]
                 self.invokeFlutterMethodOnMainThread(
                     method: "onRegisterDeviceTokenSuccess", arguments: dic)
                 AliyunPushLog.d("####### ===> APNs registration with CloudPushSDK successful")
@@ -157,13 +158,15 @@ public class AliyunPushPlugin: NSObject, FlutterPlugin, UNUserNotificationCenter
                 let badgeNum = arguments["badgeNum"] as? Int
             {
                 syncBadgeNum(badgeNum, result: result)
+            } else {
+                result([KEY_CODE: CODE_PARAMS_ILLEGAL, KEY_ERROR_MSG: "Invalid badge number"])
             }
         case "getApnsDeviceToken":
             getApnsDeviceToken(result: result)
         case "isChannelOpened":
             isChannelOpened(result: result)
         case "setPluginLogEnabled":
-            setPluginLogEnabled(call)
+            setPluginLogEnabled(call, result: result)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -309,16 +312,24 @@ public class AliyunPushPlugin: NSObject, FlutterPlugin, UNUserNotificationCenter
     }
 
     /// 同步角标数
-    private func syncBadgeNum(_ badgeNum: Int, result: FlutterResult?) {
+    private func syncBadgeNum(_ badgeNum: Int, result: @escaping FlutterResult) {
+        guard badgeNum >= 0 else {
+            result([
+                KEY_CODE: CODE_PARAMS_ILLEGAL,
+                KEY_ERROR_MSG: "badgeNum must be a non-negative integer",
+            ])
+            return
+        }
+
         CloudPushSDK.syncBadgeNum(UInt(badgeNum)) { res in
             if res.success {
                 AliyunPushLog.d("Sync badge num: [%d] success.", badgeNum)
-                result?([KEY_CODE: CODE_SUCCESS])
+                result([KEY_CODE: CODE_SUCCESS])
             } else {
                 AliyunPushLog.d(
                     "Sync badge num: [%d] failed, error: %@", badgeNum,
                     (res.error as NSError?)?.description ?? "")
-                result?([
+                result([
                     KEY_CODE: CODE_FAILED,
                     KEY_ERROR_MSG: (res.error as NSError?)?.description ?? "",
                 ])
@@ -550,7 +561,9 @@ public class AliyunPushPlugin: NSObject, FlutterPlugin, UNUserNotificationCenter
     }
 
     /// 设置是否开启插件日志
-    private func setPluginLogEnabled(_ call: FlutterMethodCall) {
+    private func setPluginLogEnabled(
+        _ call: FlutterMethodCall, result: @escaping FlutterResult
+    ) {
         if let arguments = call.arguments as? [String: Any],
             let enabled = arguments["enabled"] as? Bool
         {
@@ -559,6 +572,9 @@ public class AliyunPushPlugin: NSObject, FlutterPlugin, UNUserNotificationCenter
             } else {
                 AliyunPushLog.disableLog()
             }
+            result(nil)
+        } else {
+            result([KEY_CODE: CODE_PARAMS_ILLEGAL, KEY_ERROR_MSG: "Invalid enabled value"])
         }
     }
 

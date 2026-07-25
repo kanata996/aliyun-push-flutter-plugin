@@ -63,32 +63,37 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
     _onIOSRegisterDeviceTokenFailed = onIOSRegisterDeviceTokenFailed;
 
     methodChannel.setMethodCallHandler(_methodCallHandler);
+    if (Platform.isAndroid) {
+      methodChannel.invokeMethod<void>('messageReceiverReady').ignore();
+    }
   }
 
   Future<dynamic> _methodCallHandler(MethodCall call) async {
+    final arguments = call.arguments;
+    if (arguments is! Map) {
+      return;
+    }
+    final message = Map<dynamic, dynamic>.from(arguments);
+
     switch (call.method) {
       case 'onNotification':
-        return _onNotification!(call.arguments as Map<dynamic, dynamic>);
+        return _onNotification?.call(message);
       case 'onNotificationReceivedInApp':
-        return _onAndroidNotificationReceivedInApp!(
-            call.arguments as Map<dynamic, dynamic>);
+        return _onAndroidNotificationReceivedInApp?.call(message);
       case 'onMessage':
-        return _onMessage!(call.arguments as Map<dynamic, dynamic>);
+        return _onMessage?.call(message);
       case 'onNotificationOpened':
-        return _onNotificationOpened!(call.arguments as Map<dynamic, dynamic>);
+        return _onNotificationOpened?.call(message);
       case 'onNotificationRemoved':
-        return _onNotificationRemoved!(call.arguments as Map<dynamic, dynamic>);
+        return _onNotificationRemoved?.call(message);
       case 'onNotificationClickedWithNoAction':
-        return _onAndroidNotificationClickedWithNoAction!(
-            call.arguments as Map<dynamic, dynamic>);
+        return _onAndroidNotificationClickedWithNoAction?.call(message);
       case 'onChannelOpened':
-        return _onIOSChannelOpened!(call.arguments as Map<dynamic, dynamic>);
+        return _onIOSChannelOpened?.call(message);
       case 'onRegisterDeviceTokenSuccess':
-        return _onIOSRegisterDeviceTokenSuccess!(
-            call.arguments as Map<dynamic, dynamic>);
+        return _onIOSRegisterDeviceTokenSuccess?.call(message);
       case 'onRegisterDeviceTokenFailed':
-        return _onIOSRegisterDeviceTokenFailed!(
-            call.arguments as Map<dynamic, dynamic>);
+        return _onIOSRegisterDeviceTokenFailed?.call(message);
     }
   }
 
@@ -190,7 +195,7 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
       'soundContentType': soundContentType,
       'soundFlag': soundFlag,
       'vibration': vibration,
-      'vibrationPatterns': vibrationPatterns,
+      'vibrationPattern': vibrationPatterns,
     });
     return result;
   }
@@ -216,19 +221,26 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
       return 'Only support iOS';
     }
 
-    var apnsDeviceToken =
-        await methodChannel.invokeMethod('getApnsDeviceToken');
-    return "$apnsDeviceToken";
+    final apnsDeviceToken =
+        await methodChannel.invokeMethod<String>('getApnsDeviceToken');
+    return apnsDeviceToken ?? '';
   }
 
   @override
   Future<String> getDeviceId() async {
-    var deviceId = await methodChannel.invokeMethod('getDeviceId');
-    return "$deviceId";
+    final deviceId = await methodChannel.invokeMethod<String>('getDeviceId');
+    return deviceId ?? '';
   }
 
   @override
   Future<Map<dynamic, dynamic>> initAndroidThirdPush() async {
+    if (!Platform.isAndroid) {
+      return {
+        'code': kAliyunPushOnlyAndroid,
+        'errorMsg': 'Only support Android',
+      };
+    }
+
     Map<dynamic, dynamic> initResult =
         await methodChannel.invokeMethod('initThirdPush');
     return initResult;
@@ -260,10 +272,9 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
       return false;
     }
 
-    bool enabled =
-        await methodChannel.invokeMethod('isNotificationEnabled', {'id': id});
-
-    return enabled;
+    final enabled = await methodChannel
+        .invokeMethod<bool>('isNotificationEnabled', {'id': id});
+    return enabled ?? false;
   }
 
   @override
@@ -272,8 +283,8 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
       return false;
     }
 
-    var opened = await methodChannel.invokeMethod('isChannelOpened');
-    return opened;
+    final opened = await methodChannel.invokeMethod<bool>('isChannelOpened');
+    return opened ?? false;
   }
 
   @override
@@ -282,7 +293,10 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
       return;
     }
 
-    methodChannel.invokeMethod('jumpToNotificationSettings');
+    methodChannel.invokeMethod<void>(
+      'jumpToNotificationSettings',
+      {'id': id},
+    ).ignore();
   }
 
   @override
@@ -365,7 +379,8 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
 
   @override
   void setPluginLogEnabled(bool enabled) {
-    methodChannel.invokeMethod('setPluginLogEnabled', {'enabled': enabled});
+    methodChannel.invokeMethod<void>(
+        'setPluginLogEnabled', {'enabled': enabled}).ignore();
   }
 
   @override

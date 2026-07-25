@@ -741,11 +741,13 @@ _aliyunPush.closeAndroidPushLog().then((result) {
 
 > **注意：只支持 Android 平台**
 
-参数:
+`level` 参数可使用以下常量：
 
-| 参数名 | 类型 | 是否必须 | 含义                                                 |
-| ------ | ---- | -------- | ---------------------------------------------------- |
-| level  | int  | 必须参数 | 日志级别</br>0 - Error </br> 1 - Info </br> 2- Debug |
+| Level | 常量                                  | Int |
+| ----- | ------------------------------------- | --- |
+| Error | kAliyunPushAndroidLogLevelError       | 0   |
+| Info  | kAliyunPushAndroidLogLevelInfo        | 1   |
+| Debug | kAliyunPushAndroidLogLevelDebug       | 2   |
 
 返回值：
 
@@ -760,6 +762,7 @@ map 中包含两个 key 值:
 
 ```dart
 
+final logLevel = kAliyunPushAndroidLogLevelInfo;
 _aliyunPush.setAndroidLogLevel(logLevel).then((result) {
     var code = result['code'];
     if (code == kAliyunPushSuccessCode) {
@@ -1094,13 +1097,15 @@ _aliyunPush.setAndroidBadgeNum(5).then((result) {
 
 `Future<Map<dynamic, dynamic>> setIOSLogLevel(int level) async`
 
-| Level | Int |
-| ----- | --- |
-| None  | 0   |
-| Error | 1   |
-| Warn  | 2   |
-| Info  | 3   |
-| Debug | 4   |
+`level` 参数可使用以下常量：
+
+| Level | 常量                              | Int |
+| ----- | --------------------------------- | --- |
+| None  | kAliyunPushIOSLogLevelNone        | 0   |
+| Error | kAliyunPushIOSLogLevelError       | 1   |
+| Warn  | kAliyunPushIOSLogLevelWarn        | 2   |
+| Info  | kAliyunPushIOSLogLevelInfo        | 3   |
+| Debug | kAliyunPushIOSLogLevelDebug       | 4   |
 
 设置 iOS 推送 SDK 输出日志的级别
 
@@ -1120,6 +1125,7 @@ map 中包含两个 key 值:
 代码示例：
 
 ```dart
+final logLevel = kAliyunPushIOSLogLevelInfo;
 _aliyunPush.setIOSLogLevel(logLevel).then((result) {
     var code = result['code'];
     if (code == kAliyunPushSuccessCode) {
@@ -1273,10 +1279,11 @@ _aliyunPush.setPluginLogEnabled(true);
 
 ## 五、错误码
 
-| 名称                   | 值      | 含义                                                            |
-| ---------------------- | ------- | --------------------------------------------------------------- |
-| kAliyunPushSuccessCode | "10000" | 成功                                                            |
-| kAliyunPushFailedCode  | "10001" | 通用失败码                                                      |
-| kAliyunPushOnlyAndroid | "10002" | 方法只支持 Android 平台                                         |
-| kAliyunPushOnlyIOS     | "10003" | 方法只支持 iOS 平台                                             |
-| kAliyunPushNotSupport  | "10004" | 平台不支持，比如 Android 创建 group 只支持 Android 8.0 以上版本 |
+| 名称                     | 值      | 含义                                                            |
+| ------------------------ | ------- | --------------------------------------------------------------- |
+| kAliyunPushSuccessCode   | "10000" | 成功                                                            |
+| kAliyunPushParamsIllegal | "10001" | 参数错误                                                        |
+| kAliyunPushFailedCode    | "10002" | 通用失败码                                                      |
+| kAliyunPushOnlyAndroid   | "10003" | 方法只支持 Android 平台                                         |
+| kAliyunPushOnlyIOS       | "10004" | 方法只支持 iOS 平台                                             |
+| kAliyunPushNotSupport    | "10005" | 平台不支持，比如 Android 创建 group 只支持 Android 8.0 以上版本 |

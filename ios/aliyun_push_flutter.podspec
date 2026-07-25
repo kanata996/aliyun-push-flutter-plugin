@@ -15,8 +15,8 @@ A new Flutter plugin project.
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.dependency 'Flutter'
-  s.dependency 'AlicloudPush', '>= 3.2.3', '< 4.0'
-  s.platform = :ios, '12.0'
+  s.dependency 'AlicloudPush', '>= 3.2.4', '< 4.0'
+  s.platform = :ios, '13.0'
   s.static_framework = true
 
   # Flutter.framework does not contain a i386 slice.
