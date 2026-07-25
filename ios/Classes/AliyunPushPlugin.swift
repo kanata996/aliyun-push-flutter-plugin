@@ -220,12 +220,12 @@ public class AliyunPushPlugin: NSObject, FlutterPlugin, UNUserNotificationCenter
             return
         }
 
+        registerAPNs()
+
         CloudPushSDK.start(withAppkey: appKey, appSecret: appSecret) { res in
             if res.success {
                 AliyunPushLog.d(
                     "Push SDK init success, deviceId: %@.", CloudPushSDK.getDeviceId() ?? "")
-                // SDK初始化成功后再注册APNs
-                self.registerAPNs()
                 result([KEY_CODE: CODE_SUCCESS])
             } else {
                 AliyunPushLog.d(
