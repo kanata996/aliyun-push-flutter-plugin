@@ -1,6 +1,9 @@
 ## 1.5.0
 
 - **Breaking:** 移除公开 API 的 `Map<dynamic, dynamic>` 结果协议
+- 新增 `setIOSForegroundNoticeMode`，支持 iOS 前台通知仅回调、仅展示、展示且回调三种模式
+- 废弃 `showIOSNoticeWhenForeground`，建议使用 `setIOSForegroundNoticeMode`
+- **Breaking:** `showIOSNoticeWhenForeground(true)` 调整为仅展示通知、不触发回调，与官方语义保持一致
 - 命令 API 统一返回 `Future<void>`，查询 API 直接返回 `String`、`bool`、`List<String>` 或 `AliyunPushChannelStatus`
 - 新增 `AliyunPushException`，统一表示原生 SDK、平台限制、无效响应和 MethodChannel 失败
 - Android 与 iOS 的别名、标签查询结果统一为 `List<String>`

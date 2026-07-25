@@ -198,6 +198,50 @@ void main() {
     );
   });
 
+  test('forwards iOS foreground notice modes to the platform', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    final calls = <MethodCall>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call);
+      return {'code': kAliyunPushSuccessCode};
+    });
+
+    await platform.setIOSForegroundNoticeMode(
+      ForegroundNoticeMode.callbackOnly,
+    );
+    await platform.setIOSForegroundNoticeMode(ForegroundNoticeMode.showOnly);
+    await platform.setIOSForegroundNoticeMode(
+      ForegroundNoticeMode.showAndCallback,
+    );
+    // ignore: deprecated_member_use_from_same_package
+    await platform.showIOSNoticeWhenForeground(true);
+    // ignore: deprecated_member_use_from_same_package
+    await platform.showIOSNoticeWhenForeground(false);
+
+    expect(calls, [
+      isMethodCall(
+        'showNoticeWhenForeground',
+        arguments: {'mode': ForegroundNoticeMode.callbackOnly.value},
+      ),
+      isMethodCall(
+        'showNoticeWhenForeground',
+        arguments: {'mode': ForegroundNoticeMode.showOnly.value},
+      ),
+      isMethodCall(
+        'showNoticeWhenForeground',
+        arguments: {'mode': ForegroundNoticeMode.showAndCallback.value},
+      ),
+      isMethodCall(
+        'showNoticeWhenForeground',
+        arguments: {'mode': ForegroundNoticeMode.showOnly.value},
+      ),
+      isMethodCall(
+        'showNoticeWhenForeground',
+        arguments: {'mode': ForegroundNoticeMode.callbackOnly.value},
+      ),
+    ]);
+  });
+
   test('rejects a missing device id', () async {
     messenger.setMockMethodCallHandler(channel, (call) async {
       expect(call.method, 'getDeviceId');

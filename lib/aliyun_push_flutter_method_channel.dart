@@ -516,12 +516,23 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
   }
 
   @override
-  Future<void> showIOSNoticeWhenForeground(bool enable) async {
-    _requireIOS('showIOSNoticeWhenForeground');
+  Future<void> setIOSForegroundNoticeMode(ForegroundNoticeMode mode) async {
+    _requireIOS('setIOSForegroundNoticeMode');
     await _invokeCommand(
-      'showIOSNoticeWhenForeground',
+      'setIOSForegroundNoticeMode',
       'showNoticeWhenForeground',
-      {'enable': enable},
+      {'mode': mode.value},
+    );
+  }
+
+  @override
+  @Deprecated(
+      'Use setIOSForegroundNoticeMode with ForegroundNoticeMode instead.')
+  Future<void> showIOSNoticeWhenForeground(bool enable) {
+    return setIOSForegroundNoticeMode(
+      enable
+          ? ForegroundNoticeMode.showOnly
+          : ForegroundNoticeMode.callbackOnly,
     );
   }
 

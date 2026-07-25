@@ -75,31 +75,49 @@ class _IOSPageState extends BaseState<IOSPage> {
   Widget _setNoticeWhenForegroundBuilder() {
     final List<Widget> children = [];
 
-    children.add(titleBuilder('设置前台显示通知'));
+    children.add(titleBuilder('设置前台通知处理模式'));
     children.add(const SizedBox(height: 20));
 
     children.add(FilledButton(
       onPressed: () async {
         try {
-          await _aliyunPush.showIOSNoticeWhenForeground(true);
-          showOkDialog('设置前台显示通知成功');
+          await _aliyunPush.setIOSForegroundNoticeMode(
+            ForegroundNoticeMode.callbackOnly,
+          );
+          showOkDialog('设置前台仅回调成功');
         } on AliyunPushException catch (error) {
-          showErrorDialog('设置前台显示通知失败: ${error.message}');
+          showErrorDialog('设置前台仅回调失败: ${error.message}');
         }
       },
-      child: const Text('前台显示通知'),
+      child: const Text('仅回调，不展示通知'),
     ));
 
     children.add(FilledButton(
       onPressed: () async {
         try {
-          await _aliyunPush.showIOSNoticeWhenForeground(false);
-          showOkDialog('设置前台不显示通知成功');
+          await _aliyunPush.setIOSForegroundNoticeMode(
+            ForegroundNoticeMode.showOnly,
+          );
+          showOkDialog('设置前台仅展示成功');
         } on AliyunPushException catch (error) {
-          showErrorDialog('设置前台不显示通知失败: ${error.message}');
+          showErrorDialog('设置前台仅展示失败: ${error.message}');
         }
       },
-      child: const Text('前台不显示通知'),
+      child: const Text('仅展示通知，不回调'),
+    ));
+
+    children.add(FilledButton(
+      onPressed: () async {
+        try {
+          await _aliyunPush.setIOSForegroundNoticeMode(
+            ForegroundNoticeMode.showAndCallback,
+          );
+          showOkDialog('设置前台展示且回调成功');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('设置前台展示且回调失败: ${error.message}');
+        }
+      },
+      child: const Text('展示通知且回调'),
     ));
 
     return cardBuilder(Column(children: children));

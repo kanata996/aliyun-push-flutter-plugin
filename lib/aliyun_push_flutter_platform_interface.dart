@@ -214,10 +214,23 @@ abstract class AliyunPushFlutterPlatform extends PlatformInterface {
     throw UnimplementedError('setIOSLogLevel() has not been implemented.');
   }
 
-  /// App处于前台时显示通知
-  Future<void> showIOSNoticeWhenForeground(bool enable) async {
+  /// 设置 iOS App 处于前台时的通知处理模式。
+  Future<void> setIOSForegroundNoticeMode(ForegroundNoticeMode mode) async {
     throw UnimplementedError(
-        'showIOSNoticeWhenForeground() has not been implemented.');
+        'setIOSForegroundNoticeMode() has not been implemented.');
+  }
+
+  /// App处于前台时是否显示通知。
+  ///
+  /// 已废弃，请改用 [setIOSForegroundNoticeMode]。
+  @Deprecated(
+      'Use setIOSForegroundNoticeMode with ForegroundNoticeMode instead.')
+  Future<void> showIOSNoticeWhenForeground(bool enable) async {
+    return setIOSForegroundNoticeMode(
+      enable
+          ? ForegroundNoticeMode.showOnly
+          : ForegroundNoticeMode.callbackOnly,
+    );
   }
 
   /// iOS 设置角标数

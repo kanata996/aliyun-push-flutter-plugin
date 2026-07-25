@@ -357,12 +357,21 @@ Android 日志等级常量：
 | 方法 | 返回类型 | 说明 |
 | --- | --- | --- |
 | `setIOSLogLevel(level)` | `Future<void>` | 设置日志等级 |
-| `showIOSNoticeWhenForeground(enable)` | `Future<void>` | 设置前台是否显示通知 |
+| `setIOSForegroundNoticeMode(mode)` | `Future<void>` | 设置前台通知的展示和回调模式 |
+| `showIOSNoticeWhenForeground(enable)` | `Future<void>` | 已废弃，请使用 `setIOSForegroundNoticeMode` |
 | `setIOSBadgeNum(num)` | `Future<void>` | 设置本地角标数 |
 | `syncIOSBadgeNum(num)` | `Future<void>` | 同步角标数到服务端 |
 | `getApnsDeviceToken()` | `Future<String>` | 获取非空 APNs Token |
 | `isIOSChannelOpened()` | `Future<bool>` | 查询通知通道是否开启 |
 | `turnOnIOSDebug()` | `Future<void>` | 已废弃，请使用 `setIOSLogLevel(4)` |
+
+前台通知处理模式：
+
+| 模式 | 行为 |
+| --- | --- |
+| `ForegroundNoticeMode.callbackOnly` | 仅触发回调，不展示通知 |
+| `ForegroundNoticeMode.showOnly` | 仅展示通知，不触发回调 |
+| `ForegroundNoticeMode.showAndCallback` | 展示通知且触发回调 |
 
 iOS 日志等级常量：
 

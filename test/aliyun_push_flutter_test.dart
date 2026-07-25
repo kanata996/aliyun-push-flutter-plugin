@@ -243,6 +243,11 @@ class MockAliyunPushFlutterPlatform
   }
 
   @override
+  Future<void> setIOSForegroundNoticeMode(ForegroundNoticeMode mode) {
+    return _recordVoid('setIOSForegroundNoticeMode', mode);
+  }
+
+  @override
   Future<void> setNotificationInGroup(bool inGroup) {
     return _recordVoid('setNotificationInGroup', inGroup);
   }
@@ -391,6 +396,13 @@ void main() {
         kAliyunPushIOSLogLevelDebug,
       ],
       [0, 1, 2, 3, 4],
+    );
+  });
+
+  test('defines iOS foreground notice modes', () {
+    expect(
+      ForegroundNoticeMode.values.map((mode) => mode.value),
+      [0, 1, 2],
     );
   });
 
@@ -638,9 +650,21 @@ void main() {
       4,
     );
     await expectVoidCall(
+      plugin.setIOSForegroundNoticeMode(
+        ForegroundNoticeMode.showAndCallback,
+      ),
+      'setIOSForegroundNoticeMode',
+      ForegroundNoticeMode.showAndCallback,
+    );
+    await expectVoidCall(
       plugin.showIOSNoticeWhenForeground(true),
-      'showIOSNoticeWhenForeground',
-      true,
+      'setIOSForegroundNoticeMode',
+      ForegroundNoticeMode.showOnly,
+    );
+    await expectVoidCall(
+      plugin.showIOSNoticeWhenForeground(false),
+      'setIOSForegroundNoticeMode',
+      ForegroundNoticeMode.callbackOnly,
     );
     await expectVoidCall(
       plugin.turnOnIOSDebug(),

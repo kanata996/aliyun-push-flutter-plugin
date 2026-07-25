@@ -30,6 +30,23 @@ const kAliyunPushIOSLogLevelInfo = 3;
 /// iOS LogLevel debug
 const kAliyunPushIOSLogLevelDebug = 4;
 
+/// iOS 前台通知处理模式。
+enum ForegroundNoticeMode {
+  /// 仅触发回调，不展示通知。
+  callbackOnly(0),
+
+  /// 仅展示通知，不触发回调。
+  showOnly(1),
+
+  /// 展示通知且触发回调。
+  showAndCallback(2);
+
+  /// 传递给 iOS 原生实现的模式值。
+  final int value;
+
+  const ForegroundNoticeMode(this.value);
+}
+
 /// Android LogLevel debug
 @Deprecated('Use kAliyunPushAndroidLogLevelDebug instead.')
 const kAliyunPushLogLevelDebug = kAliyunPushAndroidLogLevelDebug;
@@ -275,10 +292,22 @@ class AliyunPushFlutter {
     return AliyunPushFlutterPlatform.instance.setPluginLogEnabled(enabled);
   }
 
-  /// App处于前台时显示通知
+  /// 设置 iOS App 处于前台时的通知处理模式。
+  Future<void> setIOSForegroundNoticeMode(ForegroundNoticeMode mode) async {
+    return AliyunPushFlutterPlatform.instance.setIOSForegroundNoticeMode(mode);
+  }
+
+  /// App处于前台时是否显示通知。
+  ///
+  /// 已废弃，请改用 [setIOSForegroundNoticeMode]。
+  @Deprecated(
+      'Use setIOSForegroundNoticeMode with ForegroundNoticeMode instead.')
   Future<void> showIOSNoticeWhenForeground(bool enable) async {
-    return AliyunPushFlutterPlatform.instance
-        .showIOSNoticeWhenForeground(enable);
+    return setIOSForegroundNoticeMode(
+      enable
+          ? ForegroundNoticeMode.showOnly
+          : ForegroundNoticeMode.callbackOnly,
+    );
   }
 
   /// 同步角标数

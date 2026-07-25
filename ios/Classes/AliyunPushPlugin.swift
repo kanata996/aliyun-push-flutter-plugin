@@ -15,7 +15,7 @@ let CODE_NO_NET = "10003"
 public class AliyunPushPlugin: NSObject, FlutterPlugin, UNUserNotificationCenterDelegate {
     private var channel: FlutterMethodChannel?
     private var notificationCenter: UNUserNotificationCenter?
-    private var showNoticeWhenForeground: Bool = false
+    private var foregroundNoticeMode = 0
     private var remoteNotificationPayload: [AnyHashable: Any]?
 
     // MARK: - FlutterPlugin
@@ -378,17 +378,21 @@ public class AliyunPushPlugin: NSObject, FlutterPlugin, UNUserNotificationCenter
         result([KEY_CODE: CODE_SUCCESS])
     }
 
-    /// App处于前台时显示通知
+    /// 设置 App 处于前台时的通知处理模式
     private func showNoticeWhenForeground(
         _ call: FlutterMethodCall, result: @escaping FlutterResult
     ) {
         guard let arguments = call.arguments as? [String: Any],
-            let enable = arguments["enable"] as? Bool
+            let mode = arguments["mode"] as? Int,
+            (0...2).contains(mode)
         else {
-            result([KEY_CODE: CODE_PARAMS_ILLEGAL, KEY_ERROR_MSG: "Invalid enable value"])
+            result([
+                KEY_CODE: CODE_PARAMS_ILLEGAL,
+                KEY_ERROR_MSG: "Invalid foreground notice mode",
+            ])
             return
         }
-        showNoticeWhenForeground = enable
+        foregroundNoticeMode = mode
         result([KEY_CODE: CODE_SUCCESS])
     }
 
@@ -590,12 +594,16 @@ public class AliyunPushPlugin: NSObject, FlutterPlugin, UNUserNotificationCenter
     ) {
         let userInfo = notification.request.content.userInfo
         CloudPushSDK.sendNotificationAck(userInfo)
-        invokeFlutterMethodOnMainThread(method: "onNotification", arguments: userInfo)
 
-        if showNoticeWhenForeground {
-            completionHandler([.sound, .alert, .badge])
-        } else {
+        switch foregroundNoticeMode {
+        case 0:
+            invokeFlutterMethodOnMainThread(method: "onNotification", arguments: userInfo)
             completionHandler([])
+        case 1:
+            completionHandler([.sound, .alert, .badge])
+        default:
+            invokeFlutterMethodOnMainThread(method: "onNotification", arguments: userInfo)
+            completionHandler([.sound, .alert, .badge])
         }
     }
 
