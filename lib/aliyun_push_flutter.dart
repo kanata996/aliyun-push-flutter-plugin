@@ -1,4 +1,7 @@
 import 'aliyun_push_flutter_platform_interface.dart';
+import 'aliyun_push_exception.dart';
+
+export 'aliyun_push_exception.dart';
 
 /// 失败
 const kAliyunPushFailedCode = "10002";
@@ -96,39 +99,39 @@ class AliyunPushFlutter {
   }
 
   /// 添加别名
-  Future<Map<dynamic, dynamic>> addAlias(String alias) async {
+  Future<void> addAlias(String alias) async {
     return AliyunPushFlutterPlatform.instance.addAlias(alias);
   }
 
   /// 绑定账号
-  Future<Map<dynamic, dynamic>> bindAccount(String account) async {
+  Future<void> bindAccount(String account) async {
     return AliyunPushFlutterPlatform.instance.bindAccount(account);
   }
 
   /// 绑定手机号码
-  Future<Map<dynamic, dynamic>> bindPhoneNumber(String phone) async {
+  Future<void> bindPhoneNumber(String phone) async {
     return AliyunPushFlutterPlatform.instance.bindPhoneNumber(phone);
   }
 
   /// 添加标签
-  Future<Map<dynamic, dynamic>> bindTag(List<String> tags,
+  Future<void> bindTag(List<String> tags,
       {int target = kAliyunTargetDevice, String? alias}) async {
     return AliyunPushFlutterPlatform.instance
         .bindTag(tags, target: target, alias: alias);
   }
 
   /// 清除所有通知
-  Future<Map<dynamic, dynamic>> clearNotifications() async {
+  Future<void> clearNotifications() async {
     return AliyunPushFlutterPlatform.instance.clearNotifications();
   }
 
   /// 关闭 Android 推送日志
-  Future<Map<dynamic, dynamic>> closeAndroidPushLog() async {
+  Future<void> closeAndroidPushLog() async {
     return AliyunPushFlutterPlatform.instance.closeAndroidPushLog();
   }
 
   /// 创建 Android 平台的NotificationChannel
-  Future<Map<dynamic, dynamic>> createAndroidChannel(
+  Future<void> createAndroidChannel(
     String id,
     String name,
     int importance,
@@ -165,7 +168,7 @@ class AliyunPushFlutter {
   }
 
   /// 创建通知通道的分组
-  Future<Map<dynamic, dynamic>> createAndroidChannelGroup(
+  Future<void> createAndroidChannelGroup(
     String id,
     String name,
     String desc,
@@ -185,13 +188,12 @@ class AliyunPushFlutter {
   }
 
   /// 注册厂商通道
-  Future<Map<dynamic, dynamic>> initAndroidThirdPush() async {
+  Future<void> initAndroidThirdPush() async {
     return AliyunPushFlutterPlatform.instance.initAndroidThirdPush();
   }
 
   /// 注册推送
-  Future<Map<dynamic, dynamic>> initPush(
-      {String? appKey, String? appSecret}) async {
+  Future<void> initPush({String? appKey, String? appSecret}) async {
     return AliyunPushFlutterPlatform.instance
         .initPush(appKey: appKey, appSecret: appSecret);
   }
@@ -208,104 +210,103 @@ class AliyunPushFlutter {
   }
 
   /// 跳转到通知设置页面
-  void jumpToAndroidNotificationSettings({String? id}) {
+  Future<void> jumpToAndroidNotificationSettings({String? id}) async {
     return AliyunPushFlutterPlatform.instance
         .jumpToAndroidNotificationSettings(id: id);
   }
 
   /// 查询绑定别名
-  Future<Map<dynamic, dynamic>> listAlias() async {
+  Future<List<String>> listAlias() async {
     return AliyunPushFlutterPlatform.instance.listAlias();
   }
 
   /// 查询标签列表
-  Future<Map<dynamic, dynamic>> listTags(
-      {int target = kAliyunTargetDevice}) async {
+  Future<List<String>> listTags({int target = kAliyunTargetDevice}) async {
     return AliyunPushFlutterPlatform.instance.listTags(target: target);
   }
 
   /// 移除别名
-  Future<Map<dynamic, dynamic>> removeAlias(String alias) async {
+  Future<void> removeAlias(String alias) async {
     return AliyunPushFlutterPlatform.instance.removeAlias(alias);
   }
 
   /// 设置 Android log 的级别
-  Future<Map<dynamic, dynamic>> setAndroidLogLevel(int level) async {
+  Future<void> setAndroidLogLevel(int level) async {
     return AliyunPushFlutterPlatform.instance.setAndroidLogLevel(level);
   }
 
   /// Android 设置角标数
-  Future<Map<dynamic, dynamic>> setAndroidBadgeNum(int num) async {
+  Future<void> setAndroidBadgeNum(int num) async {
     return AliyunPushFlutterPlatform.instance.setAndroidBadgeNum(num);
   }
 
   /// 设置角标数
-  Future<Map<dynamic, dynamic>> setIOSBadgeNum(int num) async {
+  Future<void> setIOSBadgeNum(int num) async {
     return AliyunPushFlutterPlatform.instance.setIOSBadgeNum(num);
   }
 
   /// 设置通知分组展示，只支持 Android
-  Future<Map<dynamic, dynamic>> setNotificationInGroup(bool inGroup) async {
+  Future<void> setNotificationInGroup(bool inGroup) async {
     return AliyunPushFlutterPlatform.instance.setNotificationInGroup(inGroup);
   }
 
   /// 设置插件日志
-  void setPluginLogEnabled(bool enabled) {
+  Future<void> setPluginLogEnabled(bool enabled) async {
     return AliyunPushFlutterPlatform.instance.setPluginLogEnabled(enabled);
   }
 
   /// App处于前台时显示通知
-  Future<Map<dynamic, dynamic>> showIOSNoticeWhenForeground(bool enable) async {
+  Future<void> showIOSNoticeWhenForeground(bool enable) async {
     return AliyunPushFlutterPlatform.instance
         .showIOSNoticeWhenForeground(enable);
   }
 
   /// 同步角标数
-  Future<Map<dynamic, dynamic>> syncIOSBadgeNum(int num) async {
+  Future<void> syncIOSBadgeNum(int num) async {
     return AliyunPushFlutterPlatform.instance.syncIOSBadgeNum(num);
   }
 
   /// 已废弃，请改用 setIOSLogLevel(4) 开启 iOS Debug 日志。
   @Deprecated(
       "Use setIOSLogLevel(4) instead. The underlying iOS SDK turnOnDebug API is deprecated.")
-  Future<Map<dynamic, dynamic>> turnOnIOSDebug() async {
+  Future<void> turnOnIOSDebug() async {
     return AliyunPushFlutterPlatform.instance.turnOnIOSDebug();
   }
 
   /// 设置 iOS log 的级别
-  Future<Map<dynamic, dynamic>> setIOSLogLevel(int level) async {
+  Future<void> setIOSLogLevel(int level) async {
     return AliyunPushFlutterPlatform.instance.setIOSLogLevel(level);
   }
 
   /// 解绑账号
-  Future<Map<dynamic, dynamic>> unbindAccount() async {
+  Future<void> unbindAccount() async {
     return AliyunPushFlutterPlatform.instance.unbindAccount();
   }
 
   /// 解绑手机号码
-  Future<Map<dynamic, dynamic>> unbindPhoneNumber() async {
+  Future<void> unbindPhoneNumber() async {
     return AliyunPushFlutterPlatform.instance.unbindPhoneNumber();
   }
 
   /// 移除标签
-  Future<Map<dynamic, dynamic>> unbindTag(List<String> tags,
+  Future<void> unbindTag(List<String> tags,
       {int target = kAliyunTargetDevice, String? alias}) async {
     return AliyunPushFlutterPlatform.instance
         .unbindTag(tags, target: target, alias: alias);
   }
 
   /// Android 查询推送通道状态
-  Future<Map<dynamic, dynamic>> checkAndroidPushChannelStatus() async {
+  Future<AliyunPushChannelStatus> checkAndroidPushChannelStatus() async {
     return AliyunPushFlutterPlatform.instance.checkAndroidPushChannelStatus();
   }
 
   /// Android 开启推送通道
-  Future<Map<dynamic, dynamic>> turnOnAndroidPushChannel() async {
+  Future<void> turnOnAndroidPushChannel() async {
     return AliyunPushFlutterPlatform.instance.turnOnAndroidPushChannel();
   }
 
   /// Android 关闭推送通道
-  Future<Map<dynamic, dynamic>> turnOffAndroidPushChannel() async {
+  Future<void> turnOffAndroidPushChannel() async {
     return AliyunPushFlutterPlatform.instance.turnOffAndroidPushChannel();
   }
 }

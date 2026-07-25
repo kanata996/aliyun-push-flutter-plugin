@@ -41,7 +41,7 @@ abstract class AliyunPushFlutterPlatform extends PlatformInterface {
   }
 
   /// 注册推送
-  Future<Map<dynamic, dynamic>> initPush({
+  Future<void> initPush({
     String? appKey,
     String? appSecret,
   }) async {
@@ -49,13 +49,13 @@ abstract class AliyunPushFlutterPlatform extends PlatformInterface {
   }
 
   /// 注册厂商通道
-  Future<Map<dynamic, dynamic>> initAndroidThirdPush() async {
+  Future<void> initAndroidThirdPush() async {
     throw UnimplementedError(
         'initAndroidThirdPush() has not been implemented.');
   }
 
   /// 关闭 Android 推送日志
-  Future<Map<dynamic, dynamic>> closeAndroidPushLog() async {
+  Future<void> closeAndroidPushLog() async {
     throw UnimplementedError('closeAndroidPushLog() has not been implemented.');
   }
 
@@ -65,81 +65,80 @@ abstract class AliyunPushFlutterPlatform extends PlatformInterface {
   }
 
   /// 设置 Android log 的级别
-  Future<Map<dynamic, dynamic>> setAndroidLogLevel(int level) async {
+  Future<void> setAndroidLogLevel(int level) async {
     throw UnimplementedError('setAndroidLogLevel() has not been implemented.');
   }
 
   /// Android 设置角标数
-  Future<Map<dynamic, dynamic>> setAndroidBadgeNum(int num) async {
+  Future<void> setAndroidBadgeNum(int num) async {
     throw UnimplementedError('setAndroidBadgeNum() has not been implemented.');
   }
 
   /// 绑定账号
-  Future<Map<dynamic, dynamic>> bindAccount(String account) async {
+  Future<void> bindAccount(String account) async {
     throw UnimplementedError('bindAccount() has not been implemented.');
   }
 
   /// 解绑账号
-  Future<Map<dynamic, dynamic>> unbindAccount() async {
+  Future<void> unbindAccount() async {
     throw UnimplementedError('unbindAccount() has not been implemented.');
   }
 
   /// 添加别名
-  Future<Map<dynamic, dynamic>> addAlias(String alias) async {
+  Future<void> addAlias(String alias) async {
     throw UnimplementedError('addAlias() has not been implemented.');
   }
 
   /// 移除别名
-  Future<Map<dynamic, dynamic>> removeAlias(String alias) async {
+  Future<void> removeAlias(String alias) async {
     throw UnimplementedError('removeAlias() has not been implemented.');
   }
 
   /// 查询绑定别名
-  Future<Map<dynamic, dynamic>> listAlias() async {
+  Future<List<String>> listAlias() async {
     throw UnimplementedError('listAlias() has not been implemented.');
   }
 
   /// 添加标签
-  Future<Map<dynamic, dynamic>> bindTag(List<String> tags,
+  Future<void> bindTag(List<String> tags,
       {int target = kAliyunTargetDevice, String? alias}) async {
     throw UnimplementedError('bindTag() has not been implemented.');
   }
 
   /// 移除标签
-  Future<Map<dynamic, dynamic>> unbindTag(List<String> tags,
+  Future<void> unbindTag(List<String> tags,
       {int target = kAliyunTargetDevice, String? alias}) async {
     throw UnimplementedError('unbindTag() has not been implemented.');
   }
 
   /// 查询标签列表
-  Future<Map<dynamic, dynamic>> listTags(
-      {int target = kAliyunTargetDevice}) async {
+  Future<List<String>> listTags({int target = kAliyunTargetDevice}) async {
     throw UnimplementedError('listTags() has not been implemented.');
   }
 
   /// 绑定手机号码
-  Future<Map<dynamic, dynamic>> bindPhoneNumber(String phone) async {
+  Future<void> bindPhoneNumber(String phone) async {
     throw UnimplementedError('bindPhoneNumber() has not been implemented.');
   }
 
   /// 解绑手机号码
-  Future<Map<dynamic, dynamic>> unbindPhoneNumber() async {
+  Future<void> unbindPhoneNumber() async {
     throw UnimplementedError('unbindPhoneNumber() has not been implemented.');
   }
 
   /// 设置通知分组展示，只支持 Android
-  Future<Map<dynamic, dynamic>> setNotificationInGroup(bool inGroup) async {
+  Future<void> setNotificationInGroup(bool inGroup) async {
     throw UnimplementedError(
         'setNotificationInGroup() has not been implemented.');
   }
 
   /// 清除所有通知
-  Future<Map<dynamic, dynamic>> clearNotifications() async {
+  Future<void> clearNotifications() async {
     throw UnimplementedError('clearNotifications() has not been implemented.');
   }
 
   /// 创建 Android 平台的NotificationChannel
-  Future<Map<dynamic, dynamic>> createAndroidChannel(
+  Future<void> createAndroidChannel(
     String id,
     String name,
     int importance,
@@ -161,7 +160,7 @@ abstract class AliyunPushFlutterPlatform extends PlatformInterface {
   }
 
   /// 创建通知通道的分组
-  Future<Map<dynamic, dynamic>> createAndroidChannelGroup(
+  Future<void> createAndroidChannelGroup(
     String id,
     String name,
     String desc,
@@ -177,7 +176,7 @@ abstract class AliyunPushFlutterPlatform extends PlatformInterface {
   }
 
   /// 跳转到通知设置页面
-  void jumpToAndroidNotificationSettings({String? id}) {
+  Future<void> jumpToAndroidNotificationSettings({String? id}) async {
     throw UnimplementedError(
         'jumpToAndroidNotificationSettings() has not been implemented.');
   }
@@ -185,28 +184,28 @@ abstract class AliyunPushFlutterPlatform extends PlatformInterface {
   /// 已废弃，请改用 setIOSLogLevel(4) 开启 iOS Debug 日志。
   @Deprecated(
       "Use setIOSLogLevel(4) instead. The underlying iOS SDK turnOnDebug API is deprecated.")
-  Future<Map<dynamic, dynamic>> turnOnIOSDebug() async {
+  Future<void> turnOnIOSDebug() async {
     throw UnimplementedError('turnOnIOSDebug() has not been implemented.');
   }
 
   /// 设置 iOS log 级别
-  Future<Map<dynamic, dynamic>> setIOSLogLevel(int level) async {
+  Future<void> setIOSLogLevel(int level) async {
     throw UnimplementedError('setIOSLogLevel() has not been implemented.');
   }
 
   /// App处于前台时显示通知
-  Future<Map<dynamic, dynamic>> showIOSNoticeWhenForeground(bool enable) async {
+  Future<void> showIOSNoticeWhenForeground(bool enable) async {
     throw UnimplementedError(
         'showIOSNoticeWhenForeground() has not been implemented.');
   }
 
   /// iOS 设置角标数
-  Future<Map<dynamic, dynamic>> setIOSBadgeNum(int num) async {
+  Future<void> setIOSBadgeNum(int num) async {
     throw UnimplementedError('setIOSBadgeNum() has not been implemented.');
   }
 
   /// iOS 同步角标数
-  Future<Map<dynamic, dynamic>> syncIOSBadgeNum(int num) async {
+  Future<void> syncIOSBadgeNum(int num) async {
     throw UnimplementedError('syncIOSBadgeNum() has not been implemented.');
   }
 
@@ -221,24 +220,24 @@ abstract class AliyunPushFlutterPlatform extends PlatformInterface {
   }
 
   /// 设置是否开启插件日志
-  void setPluginLogEnabled(bool enabled) {
+  Future<void> setPluginLogEnabled(bool enabled) async {
     throw UnimplementedError('setPluginLogEnabled() has not been implemented.');
   }
 
   /// Android 查询推送通道状态
-  Future<Map<dynamic, dynamic>> checkAndroidPushChannelStatus() async {
+  Future<AliyunPushChannelStatus> checkAndroidPushChannelStatus() async {
     throw UnimplementedError(
         'checkAndroidPushChannelStatus() has not been implemented.');
   }
 
   /// Android 开启推送通道
-  Future<Map<dynamic, dynamic>> turnOnAndroidPushChannel() async {
+  Future<void> turnOnAndroidPushChannel() async {
     throw UnimplementedError(
         'turnOnAndroidPushChannel() has not been implemented.');
   }
 
   /// Android 关闭推送通道
-  Future<Map<dynamic, dynamic>> turnOffAndroidPushChannel() async {
+  Future<void> turnOffAndroidPushChannel() async {
     throw UnimplementedError(
         'turnOffAndroidPushChannel() has not been implemented.');
   }

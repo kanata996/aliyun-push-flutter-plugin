@@ -71,19 +71,19 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
     ));
 
     children.add(FilledButton(
-      onPressed: () {
+      onPressed: () async {
         var account = _accountController.text;
         if (account.isNotEmpty) {
-          _aliyunPush.bindAccount(account).then((result) {
-            var code = result['code'];
-            if (code == kAliyunPushSuccessCode) {
-              showOkDialog('绑定账号$account成功');
-              setState(() {
-                _boundAccount = account;
-              });
-              _accountController.clear();
-            }
-          });
+          try {
+            await _aliyunPush.bindAccount(account);
+            showOkDialog('绑定账号$account成功');
+            setState(() {
+              _boundAccount = account;
+            });
+            _accountController.clear();
+          } on AliyunPushException catch (error) {
+            showErrorDialog('绑定账号失败: ${error.code} - ${error.message}');
+          }
         } else {
           showWarningDialog('请输入要绑定的账号');
         }
@@ -96,21 +96,17 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
     }
 
     children.add(FilledButton(
-      onPressed: () {
-        _aliyunPush.unbindAccount().then((result) {
-          var code = result['code'];
-          if (code == kAliyunPushSuccessCode) {
-            showOkDialog('解绑账号成功');
-            setState(() {
-              _boundAccount = "";
-            });
-            _accountController.clear();
-          } else {
-            var errorCode = result['code'];
-            var errorMsg = result['errorMsg'];
-            showErrorDialog('解绑账号失败: $errorCode - $errorMsg');
-          }
-        });
+      onPressed: () async {
+        try {
+          await _aliyunPush.unbindAccount();
+          showOkDialog('解绑账号成功');
+          setState(() {
+            _boundAccount = "";
+          });
+          _accountController.clear();
+        } on AliyunPushException catch (error) {
+          showErrorDialog('解绑账号失败: ${error.code} - ${error.message}');
+        }
       },
       child: const Text('解绑账号'),
     ));
@@ -140,16 +136,17 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
           List<String> tags = [];
           tags.add(tag);
 
-          var result =
-              await _aliyunPush.bindTag(tags, target: kAliyunTargetAccount);
-          var code = result['code'];
-          if (code == kAliyunPushSuccessCode) {
+          try {
+            await _aliyunPush.bindTag(
+              tags,
+              target: kAliyunTargetAccount,
+            );
             showOkDialog('添加账号标签$tag成功');
             _addAccountTagCtr.clear();
-          } else {
-            var errorCode = result['code'];
-            var errorMsg = result['errorMsg'];
-            showErrorDialog('添加账号标签$tag失败: $errorCode - $errorMsg');
+          } on AliyunPushException catch (error) {
+            showErrorDialog(
+              '添加账号标签$tag失败: ${error.code} - ${error.message}',
+            );
           }
         } else {
           showWarningDialog('请输入要添加的账号标签');
@@ -174,16 +171,17 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
           List<String> tags = [];
           tags.add(tag);
 
-          var result =
-              await _aliyunPush.unbindTag(tags, target: kAliyunTargetAccount);
-          var code = result['code'];
-          if (code == kAliyunPushSuccessCode) {
+          try {
+            await _aliyunPush.unbindTag(
+              tags,
+              target: kAliyunTargetAccount,
+            );
             showOkDialog('删除账号标签$tag成功');
             _removeAccountTagCtr.clear();
-          } else {
-            var errorCode = result['code'];
-            var errorMsg = result['errorMsg'];
-            showErrorDialog('删除账号标签$tag失败: $errorCode - $errorMsg');
+          } on AliyunPushException catch (error) {
+            showErrorDialog(
+              '删除账号标签$tag失败: ${error.code} - ${error.message}',
+            );
           }
         } else {
           showWarningDialog('请输入要删除的账号标签');
@@ -214,15 +212,14 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
       onPressed: () async {
         var alias = _addAliasController.text;
         if (alias.isNotEmpty) {
-          var result = await _aliyunPush.addAlias(alias);
-          var code = result['code'];
-          if (code == kAliyunPushSuccessCode) {
+          try {
+            await _aliyunPush.addAlias(alias);
             showOkDialog('添加别名$alias成功');
             _addAliasController.clear();
-          } else {
-            var errorCode = result['code'];
-            var errorMsg = result['errorMsg'];
-            showErrorDialog('添加别名$alias失败: $errorCode - $errorMsg');
+          } on AliyunPushException catch (error) {
+            showErrorDialog(
+              '添加别名$alias失败: ${error.code} - ${error.message}',
+            );
           }
         } else {
           showWarningDialog('请输入要添加的别名');
@@ -244,15 +241,14 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
       onPressed: () async {
         var alias = _removeAliasController.text;
         if (alias.isNotEmpty) {
-          var result = await _aliyunPush.removeAlias(alias);
-          var code = result['code'];
-          if (code == kAliyunPushSuccessCode) {
+          try {
+            await _aliyunPush.removeAlias(alias);
             showOkDialog('删除别名$alias成功');
             _removeAliasController.clear();
-          } else {
-            var errorCode = result['code'];
-            var errorMsg = result['errorMsg'];
-            showErrorDialog('删除别名$alias失败: $errorCode - $errorMsg');
+          } on AliyunPushException catch (error) {
+            showErrorDialog(
+              '删除别名$alias失败: ${error.code} - ${error.message}',
+            );
           }
         } else {
           showWarningDialog('请输入要删除的别名');
@@ -263,15 +259,13 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.listAlias();
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
-          var aliasList = result['aliasList'];
+        try {
+          var aliasList = await _aliyunPush.listAlias();
           showOkDialog('查询别名列表成功: $aliasList');
-        } else {
-          var errorCode = result['code'];
-          var errorMsg = result['errorMsg'];
-          showErrorDialog('查询别名列表失败: $errorCode - $errorMsg');
+        } on AliyunPushException catch (error) {
+          showErrorDialog(
+            '查询别名列表失败: ${error.code} - ${error.message}',
+          );
         }
       },
       child: const Text('查询别名'),
@@ -302,16 +296,17 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
           List<String> tags = [];
           tags.add(tag);
 
-          var result =
-              await _aliyunPush.bindTag(tags, target: kAliyunTargetDevice);
-          var code = result['code'];
-          if (code == kAliyunPushSuccessCode) {
+          try {
+            await _aliyunPush.bindTag(
+              tags,
+              target: kAliyunTargetDevice,
+            );
             showOkDialog('添加设备标签$tag成功');
             _addTagController.clear();
-          } else {
-            var errorCode = result['code'];
-            var errorMsg = result['errorMsg'];
-            showErrorDialog('添加设备标签$tag失败: $errorCode - $errorMsg');
+          } on AliyunPushException catch (error) {
+            showErrorDialog(
+              '添加设备标签$tag失败: ${error.code} - ${error.message}',
+            );
           }
         } else {
           showWarningDialog('请输入要添加的标签');
@@ -336,16 +331,17 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
           List<String> tags = [];
           tags.add(tag);
 
-          var result =
-              await _aliyunPush.unbindTag(tags, target: kAliyunTargetDevice);
-          var code = result['code'];
-          if (code == kAliyunPushSuccessCode) {
+          try {
+            await _aliyunPush.unbindTag(
+              tags,
+              target: kAliyunTargetDevice,
+            );
             showOkDialog('删除设备标签$tag成功');
             _removeTagController.clear();
-          } else {
-            var errorCode = result['code'];
-            var errorMsg = result['errorMsg'];
-            showErrorDialog('删除设备标签$tag失败: $errorCode - $errorMsg');
+          } on AliyunPushException catch (error) {
+            showErrorDialog(
+              '删除设备标签$tag失败: ${error.code} - ${error.message}',
+            );
           }
         } else {
           showWarningDialog('请输入要删除的设备标签');
@@ -356,15 +352,13 @@ class _CommonApiPageState extends BaseState<CommonApiPage> {
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.listTags(target: kAliyunTargetDevice);
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
-          var tagList = result['tagsList'];
+        try {
+          var tagList = await _aliyunPush.listTags(target: kAliyunTargetDevice);
           showOkDialog('查询设备标签列表成功: $tagList');
-        } else {
-          var errorCode = result['code'];
-          var errorMsg = result['errorMsg'];
-          showErrorDialog('查询设备标签列表失败: $errorCode - $errorMsg');
+        } on AliyunPushException catch (error) {
+          showErrorDialog(
+            '查询设备标签列表失败: ${error.code} - ${error.message}',
+          );
         }
       },
       child: const Text('查询设备标签'),

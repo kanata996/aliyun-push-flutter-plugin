@@ -187,7 +187,7 @@ void main() {
       return null;
     });
 
-    platform.setPluginLogEnabled(true);
+    await platform.setPluginLogEnabled(true);
 
     expect(
       await nativeCall.future,
@@ -198,28 +198,128 @@ void main() {
     );
   });
 
-  test('returns an empty device id when the platform returns null', () async {
+  test('rejects a missing device id', () async {
     messenger.setMockMethodCallHandler(channel, (call) async {
       expect(call.method, 'getDeviceId');
       return null;
     });
 
-    expect(await platform.getDeviceId(), isEmpty);
+    await expectLater(
+      platform.getDeviceId(),
+      throwsA(
+        isA<AliyunPushException>()
+            .having(
+              (error) => error.code,
+              'code',
+              kAliyunPushInvalidResponseCode,
+            )
+            .having((error) => error.operation, 'operation', 'getDeviceId'),
+      ),
+    );
   });
 
   test('rejects third-party push initialization outside Android', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     var nativeCallCount = 0;
     messenger.setMockMethodCallHandler(channel, (_) async {
       nativeCallCount += 1;
       return null;
     });
 
-    final result = await platform.initAndroidThirdPush();
-
-    expect(result, {
-      'code': kAliyunPushOnlyAndroid,
-      'errorMsg': 'Only support Android',
-    });
+    await expectLater(
+      platform.initAndroidThirdPush(),
+      throwsA(
+        isA<AliyunPushException>()
+            .having((error) => error.code, 'code', kAliyunPushOnlyAndroid)
+            .having(
+              (error) => error.operation,
+              'operation',
+              'initAndroidThirdPush',
+            ),
+      ),
+    );
     expect(nativeCallCount, 0);
+  });
+
+  test('completes commands when the native result succeeds', () async {
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      expect(call, isMethodCall('bindAccount', arguments: {'account': 'user'}));
+      return {'code': kAliyunPushSuccessCode};
+    });
+
+    await platform.bindAccount('user');
+  });
+
+  test('throws AliyunPushException when the native result fails', () async {
+    messenger.setMockMethodCallHandler(channel, (_) async {
+      return {'code': 'PUSH_10107', 'errorMsg': 'network unavailable'};
+    });
+
+    await expectLater(
+      platform.bindAccount('user'),
+      throwsA(
+        isA<AliyunPushException>()
+            .having((error) => error.code, 'code', 'PUSH_10107')
+            .having(
+              (error) => error.message,
+              'message',
+              'network unavailable',
+            )
+            .having((error) => error.operation, 'operation', 'bindAccount'),
+      ),
+    );
+  });
+
+  test('wraps method channel failures', () async {
+    messenger.setMockMethodCallHandler(channel, (_) async {
+      throw PlatformException(code: 'channel_error', message: 'broken');
+    });
+
+    await expectLater(
+      platform.bindAccount('user'),
+      throwsA(
+        isA<AliyunPushException>()
+            .having((error) => error.code, 'code', 'channel_error')
+            .having((error) => error.message, 'message', 'broken')
+            .having((error) => error.cause, 'cause', isA<PlatformException>()),
+      ),
+    );
+  });
+
+  test('normalizes Android comma-separated aliases', () async {
+    messenger.setMockMethodCallHandler(channel, (_) async {
+      return {
+        'code': kAliyunPushSuccessCode,
+        'aliasList': 'alpha, beta,,',
+      };
+    });
+
+    expect(await platform.listAlias(), ['alpha', 'beta']);
+  });
+
+  test('normalizes iOS tag arrays', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    messenger.setMockMethodCallHandler(channel, (_) async {
+      return {
+        'code': kAliyunPushSuccessCode,
+        'tagsList': ['alpha', 'beta'],
+      };
+    });
+
+    expect(await platform.listTags(), ['alpha', 'beta']);
+  });
+
+  test('maps Android push channel status to an enum', () async {
+    messenger.setMockMethodCallHandler(channel, (_) async {
+      return {
+        'code': kAliyunPushSuccessCode,
+        'status': 'on',
+      };
+    });
+
+    expect(
+      await platform.checkAndroidPushChannelStatus(),
+      AliyunPushChannelStatus.enabled,
+    );
   });
 }

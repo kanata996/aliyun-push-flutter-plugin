@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -64,7 +63,7 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
     _onIOSRegisterDeviceTokenFailed = onIOSRegisterDeviceTokenFailed;
 
     methodChannel.setMethodCallHandler(_methodCallHandler);
-    if (Platform.isAndroid) {
+    if (defaultTargetPlatform == TargetPlatform.android) {
       methodChannel.invokeMethod<void>('messageReceiverReady').ignore();
     }
   }
@@ -134,65 +133,200 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
     }
   }
 
-  @override
-  Future<Map<dynamic, dynamic>> bindAccount(String account) async {
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('bindAccount', {'account': account});
-    return result;
+  Future<Object?> _invokeMethod(
+    String operation,
+    String method, [
+    Object? arguments,
+  ]) async {
+    try {
+      return await methodChannel.invokeMethod<Object?>(method, arguments);
+    } on PlatformException catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        AliyunPushException(
+          code: error.code,
+          message: error.message ?? 'Platform operation failed',
+          operation: operation,
+          cause: error,
+        ),
+        stackTrace,
+      );
+    } on MissingPluginException catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        AliyunPushException(
+          code: kAliyunPushMissingPluginCode,
+          message: error.toString(),
+          operation: operation,
+          cause: error,
+        ),
+        stackTrace,
+      );
+    }
   }
 
-  @override
-  Future<Map<dynamic, dynamic>> bindPhoneNumber(String phone) async {
-    if (!Platform.isAndroid) {
-      return {
-        'code': kAliyunPushOnlyAndroid,
-        'errorMsg': 'Only support Android',
-      };
+  Future<Map<Object?, Object?>> _invokeResultMap(
+    String operation,
+    String method, [
+    Object? arguments,
+  ]) async {
+    final value = await _invokeMethod(operation, method, arguments);
+    if (value is! Map) {
+      throw _invalidResponse(operation, 'Expected a result Map');
     }
 
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('bindPhoneNumber', {'phone': phone});
-    return result;
-  }
-
-  @override
-  Future<Map<dynamic, dynamic>> bindTag(List<String> tags,
-      {int target = kAliyunTargetDevice, String? alias}) async {
-    Map<dynamic, dynamic> result = await methodChannel.invokeMethod(
-        'bindTag', {'tags': tags, 'target': target, 'alias': alias});
-    return result;
-  }
-
-  @override
-  Future<Map<dynamic, dynamic>> clearNotifications() async {
-    if (!Platform.isAndroid) {
-      return {
-        'code': kAliyunPushOnlyAndroid,
-        'errorMsg': 'Only support Android',
-      };
+    final result = Map<Object?, Object?>.from(value);
+    final code = result['code'];
+    if (code is! String || code.isEmpty) {
+      throw _invalidResponse(operation, 'Missing result code');
     }
-
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('clearNotifications');
-    return result;
-  }
-
-  @override
-  Future<Map<dynamic, dynamic>> closeAndroidPushLog() async {
-    if (!Platform.isAndroid) {
-      return {
-        'code': kAliyunPushOnlyAndroid,
-        'errorMsg': 'Only support Android',
-      };
+    if (code != kAliyunPushSuccessCode) {
+      final errorMessage = result['errorMsg'];
+      throw AliyunPushException(
+        code: code,
+        message: errorMessage is String && errorMessage.isNotEmpty
+            ? errorMessage
+            : 'Operation failed',
+        operation: operation,
+      );
     }
-
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('closePushLog');
     return result;
   }
 
+  Future<void> _invokeCommand(
+    String operation,
+    String method, [
+    Object? arguments,
+  ]) async {
+    await _invokeResultMap(operation, method, arguments);
+  }
+
+  Future<String> _invokeString(String operation, String method) async {
+    final value = await _invokeMethod(operation, method);
+    if (value is! String || value.isEmpty) {
+      throw _invalidResponse(operation, 'Expected a non-empty String');
+    }
+    return value;
+  }
+
+  Future<bool> _invokeBool(
+    String operation,
+    String method, [
+    Object? arguments,
+  ]) async {
+    final value = await _invokeMethod(operation, method, arguments);
+    if (value is! bool) {
+      throw _invalidResponse(operation, 'Expected a bool');
+    }
+    return value;
+  }
+
+  List<String> _readStringList(
+    Map<Object?, Object?> result,
+    String key,
+    String operation,
+  ) {
+    final value = result[key];
+    if (value is List) {
+      if (value.any((item) => item is! String)) {
+        throw _invalidResponse(operation, 'Expected $key to contain Strings');
+      }
+      return List<String>.unmodifiable(value.cast<String>());
+    }
+    if (value is String) {
+      return List<String>.unmodifiable(
+        value
+            .split(',')
+            .map((item) => item.trim())
+            .where((item) => item.isNotEmpty),
+      );
+    }
+    throw _invalidResponse(operation, 'Expected $key to be a list');
+  }
+
+  AliyunPushChannelStatus _readChannelStatus(
+    Map<Object?, Object?> result,
+    String operation,
+  ) {
+    return switch (result['status']) {
+      'on' => AliyunPushChannelStatus.enabled,
+      'off' => AliyunPushChannelStatus.disabled,
+      _ => throw _invalidResponse(operation, 'Unknown push channel status'),
+    };
+  }
+
+  AliyunPushException _invalidResponse(String operation, String message) {
+    return AliyunPushException(
+      code: kAliyunPushInvalidResponseCode,
+      message: message,
+      operation: operation,
+    );
+  }
+
+  void _requireAndroid(String operation) {
+    if (defaultTargetPlatform != TargetPlatform.android) {
+      throw AliyunPushException(
+        code: kAliyunPushOnlyAndroid,
+        message: 'Only support Android',
+        operation: operation,
+      );
+    }
+  }
+
+  void _requireIOS(String operation) {
+    if (defaultTargetPlatform != TargetPlatform.iOS) {
+      throw AliyunPushException(
+        code: kAliyunPushOnlyIOS,
+        message: 'Only support iOS',
+        operation: operation,
+      );
+    }
+  }
+
   @override
-  Future<Map<dynamic, dynamic>> createAndroidChannel(
+  Future<void> bindAccount(String account) {
+    return _invokeCommand(
+      'bindAccount',
+      'bindAccount',
+      {'account': account},
+    );
+  }
+
+  @override
+  Future<void> bindPhoneNumber(String phone) async {
+    _requireAndroid('bindPhoneNumber');
+    await _invokeCommand(
+      'bindPhoneNumber',
+      'bindPhoneNumber',
+      {'phone': phone},
+    );
+  }
+
+  @override
+  Future<void> bindTag(
+    List<String> tags, {
+    int target = kAliyunTargetDevice,
+    String? alias,
+  }) {
+    return _invokeCommand(
+      'bindTag',
+      'bindTag',
+      {'tags': tags, 'target': target, 'alias': alias},
+    );
+  }
+
+  @override
+  Future<void> clearNotifications() async {
+    _requireAndroid('clearNotifications');
+    await _invokeCommand('clearNotifications', 'clearNotifications');
+  }
+
+  @override
+  Future<void> closeAndroidPushLog() async {
+    _requireAndroid('closeAndroidPushLog');
+    await _invokeCommand('closeAndroidPushLog', 'closePushLog');
+  }
+
+  @override
+  Future<void> createAndroidChannel(
     String id,
     String name,
     int importance,
@@ -209,15 +343,8 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
     bool? vibration,
     List<int>? vibrationPatterns,
   }) async {
-    if (!Platform.isAndroid) {
-      return {
-        'code': kAliyunPushOnlyAndroid,
-        'errorMsg': 'Only support Android',
-      };
-    }
-
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('createChannel', {
+    _requireAndroid('createAndroidChannel');
+    await _invokeCommand('createAndroidChannel', 'createChannel', {
       'id': id,
       'name': name,
       'importance': importance,
@@ -234,325 +361,251 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
       'vibration': vibration,
       'vibrationPattern': vibrationPatterns,
     });
-    return result;
   }
 
   @override
-  Future<Map<dynamic, dynamic>> createAndroidChannelGroup(
-      String id, String name, String desc) async {
-    if (!Platform.isAndroid) {
-      return {
-        'code': kAliyunPushOnlyAndroid,
-        'errorMsg': 'Only support Android',
-      };
-    }
-
-    Map<dynamic, dynamic> result = await methodChannel.invokeMethod(
-        'createChannelGroup', {'id': id, 'name': name, 'desc': desc});
-    return result;
+  Future<void> createAndroidChannelGroup(
+    String id,
+    String name,
+    String desc,
+  ) async {
+    _requireAndroid('createAndroidChannelGroup');
+    await _invokeCommand(
+      'createAndroidChannelGroup',
+      'createChannelGroup',
+      {'id': id, 'name': name, 'desc': desc},
+    );
   }
 
   @override
   Future<String> getApnsDeviceToken() async {
-    if (!Platform.isIOS) {
-      return 'Only support iOS';
-    }
-
-    final apnsDeviceToken =
-        await methodChannel.invokeMethod<String>('getApnsDeviceToken');
-    return apnsDeviceToken ?? '';
+    _requireIOS('getApnsDeviceToken');
+    return _invokeString('getApnsDeviceToken', 'getApnsDeviceToken');
   }
 
   @override
-  Future<String> getDeviceId() async {
-    final deviceId = await methodChannel.invokeMethod<String>('getDeviceId');
-    return deviceId ?? '';
+  Future<String> getDeviceId() {
+    return _invokeString('getDeviceId', 'getDeviceId');
   }
 
   @override
-  Future<Map<dynamic, dynamic>> initAndroidThirdPush() async {
-    if (!Platform.isAndroid) {
-      return {
-        'code': kAliyunPushOnlyAndroid,
-        'errorMsg': 'Only support Android',
-      };
-    }
-
-    Map<dynamic, dynamic> initResult =
-        await methodChannel.invokeMethod('initThirdPush');
-    return initResult;
+  Future<void> initAndroidThirdPush() async {
+    _requireAndroid('initAndroidThirdPush');
+    await _invokeCommand('initAndroidThirdPush', 'initThirdPush');
   }
 
   @override
-  Future<Map<dynamic, dynamic>> initPush({
+  Future<void> initPush({
     String? appKey,
     String? appSecret,
   }) async {
-    if (Platform.isIOS) {
-      Map<dynamic, dynamic> initResult =
-          await methodChannel.invokeMethod('initPushSdk', {
-        'appKey': appKey,
-        'appSecret': appSecret,
-      });
-
-      return initResult;
-    } else {
-      Map<dynamic, dynamic> initResult =
-          await methodChannel.invokeMethod('initPush');
-      return initResult;
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      await _invokeCommand(
+        'initPush',
+        'initPushSdk',
+        {'appKey': appKey, 'appSecret': appSecret},
+      );
+      return;
     }
+    _requireAndroid('initPush');
+    await _invokeCommand('initPush', 'initPush');
   }
 
   @override
   Future<bool> isAndroidNotificationEnabled({String? id}) async {
-    if (!Platform.isAndroid) {
-      return false;
-    }
-
-    final enabled = await methodChannel
-        .invokeMethod<bool>('isNotificationEnabled', {'id': id});
-    return enabled ?? false;
+    _requireAndroid('isAndroidNotificationEnabled');
+    return _invokeBool(
+      'isAndroidNotificationEnabled',
+      'isNotificationEnabled',
+      {'id': id},
+    );
   }
 
   @override
   Future<bool> isIOSChannelOpened() async {
-    if (!Platform.isIOS) {
-      return false;
-    }
-
-    final opened = await methodChannel.invokeMethod<bool>('isChannelOpened');
-    return opened ?? false;
+    _requireIOS('isIOSChannelOpened');
+    return _invokeBool('isIOSChannelOpened', 'isChannelOpened');
   }
 
   @override
-  void jumpToAndroidNotificationSettings({String? id}) {
-    if (!Platform.isAndroid) {
-      return;
-    }
-
-    methodChannel.invokeMethod<void>(
+  Future<void> jumpToAndroidNotificationSettings({String? id}) async {
+    _requireAndroid('jumpToAndroidNotificationSettings');
+    await _invokeMethod(
+      'jumpToAndroidNotificationSettings',
       'jumpToNotificationSettings',
       {'id': id},
-    ).ignore();
+    );
   }
 
   @override
-  Future<Map<dynamic, dynamic>> listAlias() async {
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('listAlias');
-    return result;
+  Future<List<String>> listAlias() async {
+    const operation = 'listAlias';
+    final result = await _invokeResultMap(operation, 'listAlias');
+    return _readStringList(result, 'aliasList', operation);
   }
 
   @override
-  Future<Map<dynamic, dynamic>> listTags(
-      {int target = kAliyunTargetDevice}) async {
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('listTags', {'target': target});
-    return result;
+  Future<List<String>> listTags({
+    int target = kAliyunTargetDevice,
+  }) async {
+    const operation = 'listTags';
+    final result = await _invokeResultMap(
+      operation,
+      'listTags',
+      {'target': target},
+    );
+    return _readStringList(result, 'tagsList', operation);
   }
 
   @override
-  Future<Map<dynamic, dynamic>> removeAlias(String alias) async {
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('removeAlias', {'alias': alias});
-    return result;
+  Future<void> removeAlias(String alias) {
+    return _invokeCommand(
+      'removeAlias',
+      'removeAlias',
+      {'alias': alias},
+    );
   }
 
   @override
-  Future<Map<dynamic, dynamic>> setAndroidLogLevel(int level) async {
-    if (!Platform.isAndroid) {
-      return {
-        'code': kAliyunPushOnlyAndroid,
-        'errorMsg': 'Only support Android',
-      };
-    }
-
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('setLogLevel', {'level': level});
-    return result;
+  Future<void> setAndroidLogLevel(int level) async {
+    _requireAndroid('setAndroidLogLevel');
+    await _invokeCommand(
+      'setAndroidLogLevel',
+      'setLogLevel',
+      {'level': level},
+    );
   }
 
   @override
-  Future<Map<dynamic, dynamic>> setAndroidBadgeNum(int num) async {
-    if (!Platform.isAndroid) {
-      return {
-        'code': kAliyunPushOnlyAndroid,
-        'errorMsg': 'Only support Android',
-      };
-    }
-
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('setBadgeNum', {'badgeNum': num});
-    return result;
+  Future<void> setAndroidBadgeNum(int num) async {
+    _requireAndroid('setAndroidBadgeNum');
+    await _invokeCommand(
+      'setAndroidBadgeNum',
+      'setBadgeNum',
+      {'badgeNum': num},
+    );
   }
 
   @override
-  Future<Map<dynamic, dynamic>> setIOSBadgeNum(int num) async {
-    if (!Platform.isIOS) {
-      return {
-        'code': kAliyunPushOnlyIOS,
-        'errorMsg': 'Only support iOS',
-      };
-    }
-
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('setBadgeNum', {'badgeNum': num});
-    return result;
+  Future<void> setIOSBadgeNum(int num) async {
+    _requireIOS('setIOSBadgeNum');
+    await _invokeCommand(
+      'setIOSBadgeNum',
+      'setBadgeNum',
+      {'badgeNum': num},
+    );
   }
 
   @override
-  Future<Map<dynamic, dynamic>> setNotificationInGroup(bool inGroup) async {
-    if (!Platform.isAndroid) {
-      return {
-        'code': kAliyunPushOnlyAndroid,
-        'errorMsg': 'Only support Android',
-      };
-    }
-
-    Map<dynamic, dynamic> result = await methodChannel
-        .invokeMethod('setNotificationInGroup', {'inGroup': inGroup});
-    return result;
+  Future<void> setNotificationInGroup(bool inGroup) async {
+    _requireAndroid('setNotificationInGroup');
+    await _invokeCommand(
+      'setNotificationInGroup',
+      'setNotificationInGroup',
+      {'inGroup': inGroup},
+    );
   }
 
   @override
-  void setPluginLogEnabled(bool enabled) {
-    methodChannel.invokeMethod<void>(
-        'setPluginLogEnabled', {'enabled': enabled}).ignore();
+  Future<void> setPluginLogEnabled(bool enabled) async {
+    await _invokeMethod(
+      'setPluginLogEnabled',
+      'setPluginLogEnabled',
+      {'enabled': enabled},
+    );
   }
 
   @override
-  Future<Map<dynamic, dynamic>> showIOSNoticeWhenForeground(bool enable) async {
-    if (!Platform.isIOS) {
-      return {
-        'code': kAliyunPushOnlyIOS,
-        'errorMsg': 'Only support iOS',
-      };
-    }
-
-    Map<dynamic, dynamic> result = await methodChannel
-        .invokeMethod('showNoticeWhenForeground', {'enable': enable});
-    return result;
+  Future<void> showIOSNoticeWhenForeground(bool enable) async {
+    _requireIOS('showIOSNoticeWhenForeground');
+    await _invokeCommand(
+      'showIOSNoticeWhenForeground',
+      'showNoticeWhenForeground',
+      {'enable': enable},
+    );
   }
 
   @override
-  Future<Map<dynamic, dynamic>> syncIOSBadgeNum(int num) async {
-    if (!Platform.isIOS) {
-      return {
-        'code': kAliyunPushOnlyIOS,
-        'errorMsg': 'Only support iOS',
-      };
-    }
-
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('syncBadgeNum', {'badgeNum': num});
-    return result;
+  Future<void> syncIOSBadgeNum(int num) async {
+    _requireIOS('syncIOSBadgeNum');
+    await _invokeCommand(
+      'syncIOSBadgeNum',
+      'syncBadgeNum',
+      {'badgeNum': num},
+    );
   }
 
   @Deprecated(
       "Use setIOSLogLevel(4) instead. The underlying iOS SDK turnOnDebug API is deprecated.")
   @override
-  Future<Map<dynamic, dynamic>> turnOnIOSDebug() async {
-    if (!Platform.isIOS) {
-      return {
-        'code': kAliyunPushOnlyIOS,
-        'errorMsg': 'Only support iOS',
-      };
-    }
-
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('turnOnDebug');
-    return result;
+  Future<void> turnOnIOSDebug() async {
+    _requireIOS('turnOnIOSDebug');
+    await _invokeCommand('turnOnIOSDebug', 'turnOnDebug');
   }
 
   @override
-  Future<Map<dynamic, dynamic>> setIOSLogLevel(int level) async {
-    if (!Platform.isIOS) {
-      return {
-        'code': kAliyunPushOnlyIOS,
-        'errorMsg': 'Only support iOS',
-      };
-    }
-
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('setIOSLogLevel', {'level': level});
-    return result;
+  Future<void> setIOSLogLevel(int level) async {
+    _requireIOS('setIOSLogLevel');
+    await _invokeCommand(
+      'setIOSLogLevel',
+      'setIOSLogLevel',
+      {'level': level},
+    );
   }
 
   @override
-  Future<Map<dynamic, dynamic>> unbindAccount() async {
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('unbindAccount');
-    return result;
+  Future<void> unbindAccount() {
+    return _invokeCommand('unbindAccount', 'unbindAccount');
   }
 
   @override
-  Future<Map<dynamic, dynamic>> unbindPhoneNumber() async {
-    if (!Platform.isAndroid) {
-      return {
-        'code': kAliyunPushOnlyAndroid,
-        'errorMsg': 'Only support Android',
-      };
-    }
-
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('unbindPhoneNumber');
-    return result;
+  Future<void> unbindPhoneNumber() async {
+    _requireAndroid('unbindPhoneNumber');
+    await _invokeCommand('unbindPhoneNumber', 'unbindPhoneNumber');
   }
 
   @override
-  Future<Map<dynamic, dynamic>> unbindTag(List<String> tags,
-      {int target = kAliyunTargetDevice, String? alias}) async {
-    Map<dynamic, dynamic> result = await methodChannel.invokeMethod(
-        'unbindTag', {'tags': tags, 'target': target, 'alias': alias});
-    return result;
+  Future<void> unbindTag(
+    List<String> tags, {
+    int target = kAliyunTargetDevice,
+    String? alias,
+  }) {
+    return _invokeCommand(
+      'unbindTag',
+      'unbindTag',
+      {'tags': tags, 'target': target, 'alias': alias},
+    );
   }
 
   @override
-  Future<Map<dynamic, dynamic>> addAlias(String alias) async {
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('addAlias', {'alias': alias});
-    return result;
+  Future<void> addAlias(String alias) {
+    return _invokeCommand(
+      'addAlias',
+      'addAlias',
+      {'alias': alias},
+    );
   }
 
   @override
-  Future<Map<dynamic, dynamic>> checkAndroidPushChannelStatus() async {
-    if (!Platform.isAndroid) {
-      return {
-        'code': kAliyunPushOnlyAndroid,
-        'errorMsg': 'Only support Android',
-      };
-    }
-
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('checkPushChannelStatus');
-    return result;
+  Future<AliyunPushChannelStatus> checkAndroidPushChannelStatus() async {
+    _requireAndroid('checkAndroidPushChannelStatus');
+    const operation = 'checkAndroidPushChannelStatus';
+    final result = await _invokeResultMap(
+      operation,
+      'checkPushChannelStatus',
+    );
+    return _readChannelStatus(result, operation);
   }
 
   @override
-  Future<Map<dynamic, dynamic>> turnOnAndroidPushChannel() async {
-    if (!Platform.isAndroid) {
-      return {
-        'code': kAliyunPushOnlyAndroid,
-        'errorMsg': 'Only support Android',
-      };
-    }
-
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('turnOnPushChannel');
-    return result;
+  Future<void> turnOnAndroidPushChannel() async {
+    _requireAndroid('turnOnAndroidPushChannel');
+    await _invokeCommand('turnOnAndroidPushChannel', 'turnOnPushChannel');
   }
 
   @override
-  Future<Map<dynamic, dynamic>> turnOffAndroidPushChannel() async {
-    if (!Platform.isAndroid) {
-      return {
-        'code': kAliyunPushOnlyAndroid,
-        'errorMsg': 'Only support Android',
-      };
-    }
-
-    Map<dynamic, dynamic> result =
-        await methodChannel.invokeMethod('turnOffPushChannel');
-    return result;
+  Future<void> turnOffAndroidPushChannel() async {
+    _requireAndroid('turnOffAndroidPushChannel');
+    await _invokeCommand('turnOffAndroidPushChannel', 'turnOffPushChannel');
   }
 }

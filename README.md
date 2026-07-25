@@ -34,68 +34,18 @@ repositories {
 }
 ```
 
-## 新增 APIs
+## 1.5.0 API 变更
 
-### ~~[已废弃]iOS 关闭推送消息通道~~
+1.5.0 移除了公开方法中的 `Map<dynamic, dynamic>` 结果协议：命令方法返回
+`Future<void>`，查询方法直接返回领域类型，失败统一抛出 `AliyunPushException`。
 
-~~`Future<Map<dynamic, dynamic>> closeCCPChannel()`~~
+Android 推送通道接口：
 
-> Aliyun iOS SDK 3.0.0 已经废弃了关闭推送消息通道的接口。
+- `Future<AliyunPushChannelStatus> checkAndroidPushChannelStatus()`
+- `Future<void> turnOnAndroidPushChannel()`
+- `Future<void> turnOffAndroidPushChannel()`
 
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
----
-
-### Android 查询推送通道状态
-
-`Future<Map<dynamic, dynamic>> checkAndroidPushChannelStatus()`
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含三个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-- `status`: on 表示推送通道打开，off 表示推送通道关闭
-
----
-
-### Android 开启推送通道
-
-`Future<Map<dynamic, dynamic>> turnOnAndroidPushChannel()`
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
----
-
-### Android 关闭推送通道
-
-`Future<Map<dynamic, dynamic>> turnOffAndroidPushChannel()`
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
+`closeCCPChannel()` 已随阿里云 iOS SDK 3.0.0 废弃并移除。
 
 ---
 
@@ -318,969 +268,140 @@ Other Linker Flags 中设定链接器参数-ObjC，加载二进制文件时，�
 
 ## 四、APIs
 
-### `initPush`
+### 返回值与错误处理
 
-`Future<Map<dynamic, dynamic>> initPush({String? appKey, String? appSecret}) async`
+1.5.0 起不再向调用方暴露原生 `code/errorMsg/data` Map：
 
-参数:
-
-| 参数名    | 类型   | 是否必须 |
-| --------- | ------ | -------- |
-| appKey    | String | 可选参数 |
-| appSecret | String | 可选参数 |
-
-Android 的 AppKey 和 AppSecret 是配置在`AnroidManifest.xml`文件中。
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码示例:
+- 只表示操作完成的方法返回 `Future<void>`。
+- 查询方法直接返回 `Future<String>`、`Future<bool>`、`Future<List<String>>` 或领域枚举。
+- 原生 SDK 失败、不支持的平台、无效的原生响应和 MethodChannel 异常统一抛出 `AliyunPushException`。
 
 ```dart
-String appKey;
-String appSecret;
-if (Platform.isIOS) {
- appKey = "填写自己iOS项目的appKey";
- appSecret = "填写自己iOS项目的appSecret";
-} else {
- appKey = "";
- appSecret = "";
-}
-
-_aliyunPush.initPush(appKey: appKey, appSecret: appSecret)
-        .then((initResult) {
-var code = initResult['code'];
-if (code == kAliyunPushSuccessCode) {
- print('Init Aliyun Push successfully');
- } else {
- String errorMsg = initResult['errorMsg'];
- print('Aliyun Push init failed, errorMsg is: $errorMsg);
+try {
+  await aliyunPush.bindAccount("account");
+  final tags = await aliyunPush.listTags();
+  print(tags);
+} on AliyunPushException catch (error) {
+  print("${error.operation}: ${error.code} - ${error.message}");
 }
 ```
 
-### `initAliyunThirdPush`
+`AliyunPushException` 包含：
 
-`Future<Map<dynamic, dynamic>> initAndroidThirdPush() async`
+| 字段 | 类型 | 含义 |
+| --- | --- | --- |
+| `code` | `String` | 插件、原生 SDK 或平台通道错误码 |
+| `message` | `String` | 错误信息 |
+| `operation` | `String` | 失败的插件 API 名称 |
+| `cause` | `Object?` | 可选的底层异常 |
 
-**注意：**该方法只支持 Android 平台
+### 通用 API
 
-初始化辅助通道
+| 方法 | 返回类型 | 说明 |
+| --- | --- | --- |
+| `initPush({appKey, appSecret})` | `Future<void>` | 初始化推送；Android 的密钥从 AndroidManifest 读取 |
+| `getDeviceId()` | `Future<String>` | 获取非空设备 ID |
+| `bindAccount(account)` | `Future<void>` | 绑定账号 |
+| `unbindAccount()` | `Future<void>` | 解绑账号 |
+| `addAlias(alias)` | `Future<void>` | 添加别名 |
+| `removeAlias(alias)` | `Future<void>` | 移除别名 |
+| `listAlias()` | `Future<List<String>>` | 查询别名列表 |
+| `bindTag(tags, {target, alias})` | `Future<void>` | 绑定标签 |
+| `unbindTag(tags, {target, alias})` | `Future<void>` | 解绑标签 |
+| `listTags({target})` | `Future<List<String>>` | 查询标签列表 |
 
-返回值：
+`listAlias()` 和 `listTags()` 会将 Android 返回的逗号分隔字符串与 iOS 返回的数组统一为不可变的 `List<String>`。
 
-`Map<dynamic, dynamic>`
+### Android API
 
-map 中包含两个 key 值:
+以下方法仅支持 Android；在其他平台调用会抛出错误码为 `10003` 的 `AliyunPushException`。
 
-- `code`: 错误码
-- `errorMsg`: 错误信息
+| 方法 | 返回类型 | 说明 |
+| --- | --- | --- |
+| `initAndroidThirdPush()` | `Future<void>` | 初始化辅助通道 |
+| `closeAndroidPushLog()` | `Future<void>` | 关闭推送 SDK 日志 |
+| `setAndroidLogLevel(level)` | `Future<void>` | 设置日志等级 |
+| `bindPhoneNumber(phone)` | `Future<void>` | 绑定手机号 |
+| `unbindPhoneNumber()` | `Future<void>` | 解绑手机号 |
+| `setNotificationInGroup(inGroup)` | `Future<void>` | 设置通知分组展示 |
+| `clearNotifications()` | `Future<void>` | 清除所有通知 |
+| `createAndroidChannel(...)` | `Future<void>` | 创建 NotificationChannel |
+| `createAndroidChannelGroup(id, name, desc)` | `Future<void>` | 创建通知通道分组 |
+| `isAndroidNotificationEnabled({id})` | `Future<bool>` | 查询应用或指定通道的通知状态 |
+| `jumpToAndroidNotificationSettings({id})` | `Future<void>` | 打开应用或指定通道的通知设置 |
+| `setAndroidBadgeNum(num)` | `Future<void>` | 设置数字角标；仅华为、荣耀、vivo 厂商通道生效 |
+| `checkAndroidPushChannelStatus()` | `Future<AliyunPushChannelStatus>` | 查询推送通道状态 |
+| `turnOnAndroidPushChannel()` | `Future<void>` | 开启推送通道 |
+| `turnOffAndroidPushChannel()` | `Future<void>` | 关闭推送通道 |
 
-代码示例：
+Android 日志等级常量：
 
-```dart
-_aliyunPush.initAndroidThirdPush().then((initResult) {
-      var code = initResult['code'];
-      if (code == kAliyunPushSuccessCode) {
-        print("Init Aliyun Third Push successfully");
-      } else {
-        print( 'Aliyun Third Push init failed, errorMsg is: $errorMsg');
-      }
-    });
-```
+| Level | 常量 | Int |
+| --- | --- | --- |
+| Error | `kAliyunPushAndroidLogLevelError` | 0 |
+| Info | `kAliyunPushAndroidLogLevelInfo` | 1 |
+| Debug | `kAliyunPushAndroidLogLevelDebug` | 2 |
 
-### `addMessageReceiver`
+`AliyunPushChannelStatus` 包含 `enabled` 和 `disabled`。
 
-```dart
-void addMessageReceiver(
-      {PushCallback? onNotification,
-      PushCallback? onMessage,
-      PushCallback? onNotificationOpened,
-      PushCallback? onNotificationRemoved,
-      PushCallback? onAndroidNotificationReceivedInApp,
-      PushCallback? onAndroidNotificationClickedWithNoAction,
-      PushCallback? onIOSChannelOpened,
-      PushCallback? onIOSRegisterDeviceTokenSuccess,
-      PushCallback? onIOSRegisterDeviceTokenFailed})
-```
+### iOS API
 
-注册推送相关的回调
+以下方法仅支持 iOS；在其他平台调用会抛出错误码为 `10004` 的 `AliyunPushException`。
 
-参数:
+| 方法 | 返回类型 | 说明 |
+| --- | --- | --- |
+| `setIOSLogLevel(level)` | `Future<void>` | 设置日志等级 |
+| `showIOSNoticeWhenForeground(enable)` | `Future<void>` | 设置前台是否显示通知 |
+| `setIOSBadgeNum(num)` | `Future<void>` | 设置本地角标数 |
+| `syncIOSBadgeNum(num)` | `Future<void>` | 同步角标数到服务端 |
+| `getApnsDeviceToken()` | `Future<String>` | 获取非空 APNs Token |
+| `isIOSChannelOpened()` | `Future<bool>` | 查询通知通道是否开启 |
+| `turnOnIOSDebug()` | `Future<void>` | 已废弃，请使用 `setIOSLogLevel(4)` |
 
-| 参数名                                   | 支持平台    | 功能                                                                                                                                                 |
-| ---------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| onNotification                           | Android/iOS | 收到通知的回调                                                                                                                                       |
-| onMessage                                | Android/iOS | 收到消息的回调                                                                                                                                       |
-| onNotificationOpened                     | Android/iOS | 从通知栏打开通知的扩展处理                                                                                                                           |
-| onNotificationRemoved                    | Android/iOS | 通知删除回调                                                                                                                                         |
-| onAndroidNotificationReceivedInApp       | Android     | 应用处于前台时通知到达回调                                                                                                                           |
-| onAndroidNotificationClickedWithNoAction | Android     | 无动作通知点击回调。当在后台或阿里云控制台指定的通知动作为无逻辑跳转时, 通知点击回调为 onNotificationClickedWithNoAction 而不是 onNotificationOpened |
-| onIOSChannelOpened                       | iOS         | 通道 channel 打开的回调                                                                                                                              |
-| onIOSRegisterDeviceTokenSuccess          | iOS         | 注册 APNs token 成功回调                                                                                                                             |
-| onIOSRegisterDeviceTokenFailed           | iOS         | 注册 APNs token 失败回调                                                                                                                             |
+iOS 日志等级常量：
 
-Android 通知回调中的 `extraMap` 始终为 Map。`onNotificationOpened` 和
-`onAndroidNotificationClickedWithNoAction` 原生返回的 JSON 字符串会自动解析；
-如果解析失败，`extraMap` 为空 Map，原始字符串保存在 `extraMapRaw` 中。iOS 回调仍返回
-APNs 的原始 `userInfo`。
+| Level | 常量 | Int |
+| --- | --- | --- |
+| None | `kAliyunPushIOSLogLevelNone` | 0 |
+| Error | `kAliyunPushIOSLogLevelError` | 1 |
+| Warn | `kAliyunPushIOSLogLevelWarn` | 2 |
+| Info | `kAliyunPushIOSLogLevelInfo` | 3 |
+| Debug | `kAliyunPushIOSLogLevelDebug` | 4 |
 
-代码示例：
+### 插件日志与消息回调
 
-```dart
-_aliyunPush.addMessageReceiver(
-        onNotification: _onNotification,
-        onNotificationOpened: _onNotificationOpened,
-        onNotificationRemoved: _onNotificationRemoved,
-        onMessage: _onMessage,
-        onAndroidNotificationReceivedInApp: _onAndroidNotificationReceivedInApp,
-        onAndroidNotificationClickedWithNoAction:
-            _onAndroidNotificationClickedWithNoAction,
-        onIOSChannelOpened: _onIOSChannelOpened,
-        onIOSRegisterDeviceTokenSuccess: _onIOSRegisterDeviceTokenSuccess,
-        onIOSRegisterDeviceTokenFailed: _onIOSRegisterDeviceTokenFailed);
-```
+- `Future<void> setPluginLogEnabled(bool enabled)`：设置插件日志开关。
+- `void addMessageReceiver(...)`：注册消息回调；再次调用会替换此前注册的全部回调。
 
-### getDeviceId
+Android 通知回调中的 `extraMap` 始终为 `Map<String, dynamic>`。点击回调中的 JSON 字符串会自动解析；解析失败时 `extraMap` 为空 Map，原始字符串保存在 `extraMapRaw`。iOS 回调仍返回 APNs 原始 `userInfo`。
 
-`Future<String> getDeviceId()`
+### 从 1.4.0 迁移
 
-获取设备 Id
-
-返回值：
-
-`String` - 设备 Id
-
-代码示例：
-
-```dart
-_aliyunPush.getDeviceId().then((deviceId) {
-});
-```
-
-### bindAccount
-
-`Future<Map<dynamic, dynamic>> bindAccount(String account) async`
-
-绑定账号
-
-参数:
-
-| 参数名  | 类型   | 是否必须 | 含义         |
-| ------- | ------ | -------- | ------------ |
-| account | String | 必须参数 | 要绑定的账号 |
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码实例:
+命令方法不再检查成功码：
 
 ```dart
-_pushPlugin.bindAccount(account).then((bindResult) {
-    var code = bindResult['code'];
-    if (code == kAliyunPushSuccessCode) {
-    } else {
-    }
-});
+// 1.4.0
+final result = await aliyunPush.bindAccount("account");
+if (result["code"] == kAliyunPushSuccessCode) {
+  // success
+}
+
+// 1.5.0
+await aliyunPush.bindAccount("account");
 ```
 
-### unbindAccount
-
-`Future<Map<dynamic, dynamic>> unbindAccount(String account) async`
-
-解绑账号
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码实例:
+查询方法直接返回数据：
 
 ```dart
-_pushPlugin.unbindAccount(account).then((unbindResult) {
-    var code = unbindResult['code'];
-    if (code == kAliyunPushSuccessCode) {
-    } else {
-    }
-});
+// 1.4.0
+final result = await aliyunPush.listTags();
+final tags = result["tagsList"];
+
+// 1.5.0
+final tags = await aliyunPush.listTags();
 ```
 
-### `addAlias`
-
-`Future<Map<dynamic, dynamic>> addAlias(String alias) async`
-
-添加别名
-
-参数:
-
-| 参数名 | 类型   | 是否必须 | 含义         |
-| ------ | ------ | -------- | ------------ |
-| alias  | String | 必须参数 | 要添加的别名 |
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码示例：
-
-```dart
-_pushPlugin.addAlias(account).then((addResult) {
-    var code = addResult['code'];
-    if (code == kAliyunPushSuccessCode) {
-    } else {
-    }
-});
-
-```
-
-### `removeAlias`
-
-`Future<Map<dynamic, dynamic>> removeAlias(String alias) async`
-
-移除别名
-
-参数:
-
-| 参数名 | 类型   | 是否必须 | 含义         |
-| ------ | ------ | -------- | ------------ |
-| alias  | String | 必须参数 | 要移除的别名 |
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码示例：
-
-```dart
-_pushPlugin.removeAlias(account).then((result) {
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
-    } else {
-    }
-});
-
-```
-
-### `listAlias`
-
-`Future<Map<dynamic, dynamic>> listAlias() async`
-
-查询别名
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含三个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-- `aliasList`: 别名列表
-
-代码示例：
-
-```dart
-_pushPlugin.listAlias(account).then((result) {
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
-    var aliasList = result['aliasList'];
-    } else {
-    }
-});
-```
-
-### `bindTag`
-
-`Future<Map<dynamic, dynamic>> bindTag(List<String> tags,{int target = kAliyunTargetDevice, String? alias}) async`
-
-添加标签
-
-参数:
-
-| 参数名 | 类型          | 是否必须 | 含义                                                       |
-| ------ | ------------- | -------- | ---------------------------------------------------------- |
-| tags   | List\<String> | 必须参数 | 要绑定的标签列表                                           |
-| target | int           | 可选参数 | 目标类型，1: 本设备 2: 本设备绑定账号 3: 别名</br>默认是 1 |
-| alias  | String        | 可选参数 | 别名（仅当 target = 3 时生效）                             |
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码实例:
-
-```dart
-_pushPlugin.bindTag(tags).then((result) {
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
-    } else {
-    }
-});
-```
-
-### `unbindTag`
-
-`Future<Map<dynamic, dynamic>> unbindTag(List<String> tags, {int target = kAliyunTargetDevice, String? alias}) async`
-
-移除标签
-
-参数:
-
-| 参数名 | 类型           | 是否必须 | 含义                                                       |
-| ------ | -------------- | -------- | ---------------------------------------------------------- |
-| tags   | List\<String\> | 必须参数 | 要移除的标签列表                                           |
-| target | int            | 可选参数 | 目标类型，1: 本设备 2: 本设备绑定账号 3: 别名</br>默认是 1 |
-| alias  | String         | 可选参数 | 别名（仅当 target = 3 时生效）                             |
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码实例:
-
-```dart
-_pushPlugin.unbindTag(tags).then((result) {
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
-    } else {
-    }
-});
-```
-
-### `listTags`
-
-`Future<Map<dynamic, dynamic>> listTags`
-
-查询标签列表
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含三个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-- `tagsList`: 标签列表
-
-代码示例：
-
-```dart
- _pushPlugin.listTags(account).then((result) {
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
-        var tagsList = listTagsResult['tagsList'];
-    } else {
-    }
-});
-```
-
-### closeAndroidPushLog
-
-`Future<Map<dynamic, dynamic>> closeAndroidPushLog() async`
-
-关闭 Android 推送 SDK 的 Log
-
-> **注意：只支持 Android 平台**
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码示例：
-
-```dart
-_aliyunPush.closeAndroidPushLog().then((result) {
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
-    }
-});
-```
-
-### setAndroidLogLevel
-
-`Future<Map<dynamic, dynamic>> setAndroidLogLevel(int level) async`
-
-设置 Android 推送 SDK 输出日志的级别
-
-> **注意：只支持 Android 平台**
-
-`level` 参数可使用以下常量：
-
-| Level | 常量                                  | Int |
-| ----- | ------------------------------------- | --- |
-| Error | kAliyunPushAndroidLogLevelError       | 0   |
-| Info  | kAliyunPushAndroidLogLevelInfo        | 1   |
-| Debug | kAliyunPushAndroidLogLevelDebug       | 2   |
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码示例：
-
-```dart
-
-final logLevel = kAliyunPushAndroidLogLevelInfo;
-_aliyunPush.setAndroidLogLevel(logLevel).then((result) {
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
-
-    } else {
-        var errorCode = result['code'];
-        var errorMsg = result['errorMsg'];
-    }
-});
-```
-
-### bindPhoneNumber
-
-`Future<Map<dynamic, dynamic>> bindPhoneNumber(String phone) async`
-
-绑定手机号码
-
-> **注意：只支持 Android 平台**
-
-参数:
-
-| 参数名 | 类型   | 是否必须 | 含义             |
-| ------ | ------ | -------- | ---------------- |
-| phone  | string | 必须参数 | 要绑定的电话号码 |
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码示例:
-
-```dart
-_aliyunPush.bindPhoneNumber(phone).then((bindResult) {
-    var code = bindResult['code'];
-    if (code == kAliyunPushSuccessCode) {
-
-    } else {
-        var errorCode = bindResult['code'];
-        var errorMsg = bindResult['errorMsg'];
-    }
-});
-```
-
-### unbindPhoneNumber
-
-`Future<Map<dynamic, dynamic>> unbindPhoneNumber() async`
-
-解绑手机号码
-
-> **注意：只支持 Android 平台**
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码示例:
-
-```dart
-_aliyunPush.unbindPhoneNumber().then((unbindResult) {
-    var code = unbindResult['code'];
-    if (code == kAliyunPushSuccessCode) {
-
-    } else {
-        var errorCode = unbindResult['code'];
-        var errorMsg = unbindResult['errorMsg'];
-    }
-});
-```
-
-### setNotificationInGroup
-
-`Future<Map<dynamic, dynamic>> setNotificationInGroup(bool inGroup) async`
-
-设置通知分组展示
-
-> **注意：只支持 Android 平台**
-
-参数:
-
-| 参数名  | 类型 | 是否必须 | 含义                         |
-| ------- | ---- | -------- | ---------------------------- |
-| inGroup | bool | 必须参数 | true-开启分组;false-关闭分组 |
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码示例：
-
-```dart
-_aliyunPush.setNotificationInGroup(true).then((result){
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
-        print('开启通知分组展示成功');
-     }
-});
-
-_aliyunPush.setNotificationInGroup(false).then((result){
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
-        print('关闭通知分组展示成功');
-     }
-});
-```
-
-### clearNotifications
-
-`Future<Map<dynamic, dynamic>> clearNotifications() async`
-
-清除所有通知
-
-> **注意：只支持 Android 平台**
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码示例:
-
-```dart
-_aliyunPush.clearNotifications().then((result) {
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
-    }
-});
-```
-
-### createAndroidChannel
-
-`Future<Map<dynamic, dynamic>> createAndroidChannel(
-      String id, String name, int importance, String description,
-      {String? groupId,
-      bool? allowBubbles,
-      bool? light,
-      int? lightColor,
-      bool? showBadge,
-      String? soundPath,
-      int? soundUsage,
-      int? soundContentType,
-      int? soundFlag,
-      bool? vibration,
-      List<int>? vibrationPatterns})`
-
-创建 Android 平台的 NotificationChannel
-
-> **注意：只支持 Android 平台**
-
-参数:
-
-| 参数名            | 类型       | 是否必须 | 含义            |
-| ----------------- | ---------- | -------- | --------------- |
-| id                | String     | 必须参数 | 通道 id         |
-| name              | String     | 必须参数 | 通道 name       |
-| importance        | int        | 必须参数 | 通道 importance |
-| desc              | String     | 必须参数 | 通道描述        |
-| groupId           | String     | 可选参数 | -               |
-| allowBubbles      | bool       | 可选参数 | -               |
-| light             | bool       | 可选参数 | -               |
-| lightColor        | int        | 可选参数 | -               |
-| showBadge         | bool       | 可选参数 | -               |
-| soundPath         | String     | 可选参数 | -               |
-| soundUsage        | int        | 可选参数 | -               |
-| soundContentType  | int        | 可选参数 | -               |
-| soundFlag         | int        | 可选参数 | -               |
-| vibration         | bool       | 可选参数 | -               |
-| vibrationPatterns | List\<int> | 可选参数 | -               |
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码示例：
-
-```dart
-
-_aliyunPush.createAndroidChannel(_channelController.text, '测试通道A', 3, '测试创建通知通道')
-    .then((createResult) {
-        var code = createResult['code'];
-        if (code == kAliyunPushSuccessCode) {
-            Fluttertoast.showToast(
-                msg: '创建$channel通道成功', gravity: ToastGravity.CENTER);
-        } else {
-            var errorCode = createResult['code'];
-            var errorMsg = createResult['errorMsg'];
-            Fluttertoast.showToast(
-                msg: '创建$channel通道失败, $errorCode - $errorMsg',
-                gravity: ToastGravity.CENTER);
-            }
-        });
-```
-
-### createAndroidChannelGroup
-
-`Future<Map<dynamic, dynamic>> createAndroidChannelGroup(String id, String name, String desc) async`
-
-创建通知通道的分组
-
-> **注意：只支持 Android 平台**
-
-参数:
-
-| 参数名 | 类型   | 是否必须 | 含义      |
-| ------ | ------ | -------- | --------- |
-| id     | String | 必须参数 | 通道 id   |
-| name   | String | 必须参数 | 通道 name |
-| desc   | String | 必须参数 | 通道描述  |
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-### isAndroidNotificationEnabled
-
-`Future<bool> isAndroidNotificationEnabled({String? id}) async`
-
-检查通知状态
-
-> **注意：只支持 Android 平台**
-
-参数:
-
-| 参数名 | 类型   | 是否必须 | 含义    |
-| ------ | ------ | -------- | ------- |
-| id     | String | 可选参数 | 通道 id |
-
-返回值：
-
-`bool` - true: 已打开; false：未打开
-
-代码示例：
-
-```dart
-bool isEnabled = await _aliyunPush.isAndroidNotificationEnabled(
-                id: 'xxx');
-```
-
-### jumpToAndroidNotificationSettings
-
-`void jumpToAndroidNotificationSettings({String? id})`
-
-跳转到通知设置页面
-
-> **注意：只支持 Android 平台**
-
-代码示例:
-
-```dart
-_aliyunPush.jumpToAndroidNotificationSettings();
-```
-
-### setAndroidBadgeNum
-
-`Future<Map<dynamic, dynamic>> setAndroidBadgeNum(int num) async`
-
-设置 Android 数字角标
-
-> **注意：只支持 Android 平台**
->
-> **注意：仅华为、荣耀、vivo 厂商通道生效，要求 Android SDK >= 3.9.1**
->
-> **注意：`0` 表示清除角标，华为/荣耀机型清角标需要客户端主动调用该接口**
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-配置说明：
-
-- 插件已内置声明 `com.huawei.android.launcher.permission.CHANGE_BADGE`
-- 插件已内置声明 `com.vivo.notification.permission.BADGE_ICON`
-- 服务端若通过推送控制角标，建议优先使用 `AndroidBadgeSetNum`，避免重复累加导致角标失真
-
-代码示例：
-
-```dart
-_aliyunPush.setAndroidBadgeNum(5).then((result) {
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
-        Fluttertoast.showToast(
-            msg: '设置 Android 角标成功', gravity: ToastGravity.CENTER);
-    } else {
-        var errorCode = result['code'];
-        var errorMsg = result['errorMsg'];
-    }
-});
-```
-
-### ~~turnOnIOSDebug~~
-
-~~`Future<Map<dynamic, dynamic>> turnOnIOSDebug() async`~~
-
-> 已废弃。阿里云 iOS SDK 已废弃原生 `turnOnDebug` 接口。
->
-> 插件当前为了兼容旧调用仍保留此方法，但请改用 `setIOSLogLevel(4)`。
-
-### setIOSLogLevel
-
-`Future<Map<dynamic, dynamic>> setIOSLogLevel(int level) async`
-
-`level` 参数可使用以下常量：
-
-| Level | 常量                              | Int |
-| ----- | --------------------------------- | --- |
-| None  | kAliyunPushIOSLogLevelNone        | 0   |
-| Error | kAliyunPushIOSLogLevelError       | 1   |
-| Warn  | kAliyunPushIOSLogLevelWarn        | 2   |
-| Info  | kAliyunPushIOSLogLevelInfo        | 3   |
-| Debug | kAliyunPushIOSLogLevelDebug       | 4   |
-
-设置 iOS 推送 SDK 输出日志的级别
-
-> **注意：只支持 iOS 平台**
->
-> `turnOnIOSDebug()` 已废弃。如需开启 Debug 日志，请使用 `setIOSLogLevel(4)`。
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码示例：
-
-```dart
-final logLevel = kAliyunPushIOSLogLevelInfo;
-_aliyunPush.setIOSLogLevel(logLevel).then((result) {
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
-
-    } else {
-        var errorCode = result['code'];
-        var errorMsg = result['errorMsg'];
-    }
-});
-```
-
-### showIOSNoticeWhenForeground
-
-`Future<Map<dynamic, dynamic>> showIOSNoticeWhenForeground(bool enable) async`
-
-App 处于前台时显示通知
-
-> **注意：只支持 iOS 平台**
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码示例：
-
-```dart
-_aliyunPush.showIOSNoticeWhenForeground(true).then((result) {
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
-        Fluttertoast.showToast(
-            msg: '设置前台显示通知成功', gravity: ToastGravity.CENTER);
-    }
-});
-```
-
-### setIOSBadgeNum
-
-`Future<Map<dynamic, dynamic>> setIOSBadgeNum(int num) async`
-
-设置角标数
-
-> **注意：只支持 iOS 平台**
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码示例：
-
-```dart
-_aliyunPush.setIOSBadgeNum(badgeNum).then((result) {
-    var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
-            Fluttertoast.showToast(
-                    msg: '设置角标个数$badgeNum成功', gravity: ToastGravity.CENTER);
-        }
-    });
-```
-
-### syncIOSBadgeNum
-
-`Future<Map<dynamic, dynamic>> syncIOSBadgeNum(int num) async`
-
-同步角标数
-
-> **注意：只支持 iOS 平台**
-
-返回值：
-
-`Map<dynamic, dynamic>`
-
-map 中包含两个 key 值:
-
-- `code`: 错误码
-- `errorMsg`: 错误信息
-
-代码示例：
-
-```dart
-_aliyunPush.syncIOSBadgeNum(badgeNum).then((result) {
-    var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
-            Fluttertoast.showToast(
-                    msg: '同步角标个数$badgeNum成功', gravity: ToastGravity.CENTER);
-        }
-    });
-```
-
-### getApnsDeviceToken
-
-`Future<String> getApnsDeviceToken() async`
-
-获取 APNs Token
-
-> **注意：只支持 iOS 平台**
-
-返回值：
-
-`String` - APNs Token
-
-代码示例：
-
-```dart
-_aliyunPush.getApnsDeviceToken().then((token) {
-});
-```
-
-### isIOSChannelOpened
-
-`Future<bool> isIOSChannelOpened() async`
-
-通知通道是否已打开
-
-> **注意：只支持 iOS 平台**
-
-返回值：
-
-`bool` - true: 已打开; false：未打开
-
-代码示例：
-
-```dart
-_aliyunPush.isIOSChannelOpened().then((opened) {
- if (opened) {
- } else {
- }
-});
-```
-
-### setPluginLogEnabled
-
-`void setPluginLogEnabled(bool enabled)`
-
-设置插件的日志是否开启
-
-代码示例:
-
-```dart
-_aliyunPush.setPluginLogEnabled(true);
-```
+需要处理失败时捕获 `AliyunPushException`，不再读取 `errorMsg`。
 
 ## 五、错误码
 
@@ -1292,3 +413,5 @@ _aliyunPush.setPluginLogEnabled(true);
 | kAliyunPushOnlyAndroid   | "10003" | 方法只支持 Android 平台                                         |
 | kAliyunPushOnlyIOS       | "10004" | 方法只支持 iOS 平台                                             |
 | kAliyunPushNotSupport    | "10005" | 平台不支持，比如 Android 创建 group 只支持 Android 8.0 以上版本 |
+| kAliyunPushMissingPluginCode | "missing_plugin" | MethodChannel 未找到平台实现 |
+| kAliyunPushInvalidResponseCode | "invalid_response" | 原生平台返回的数据不符合插件协议 |

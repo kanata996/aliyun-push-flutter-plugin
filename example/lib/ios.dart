@@ -33,12 +33,11 @@ class _IOSPageState extends BaseState<IOSPage> {
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.setIOSLogLevel(4);
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
+        try {
+          await _aliyunPush.setIOSLogLevel(4);
           showOkDialog('打开Debug日志成功');
-        } else {
-          showErrorDialog('打开Debug日志失败');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('打开Debug日志失败: ${error.message}');
         }
       },
       child: const Text('打开debug日志'),
@@ -81,12 +80,11 @@ class _IOSPageState extends BaseState<IOSPage> {
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.showIOSNoticeWhenForeground(true);
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
+        try {
+          await _aliyunPush.showIOSNoticeWhenForeground(true);
           showOkDialog('设置前台显示通知成功');
-        } else {
-          showErrorDialog('设置前台显示通知失败');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('设置前台显示通知失败: ${error.message}');
         }
       },
       child: const Text('前台显示通知'),
@@ -94,12 +92,11 @@ class _IOSPageState extends BaseState<IOSPage> {
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.showIOSNoticeWhenForeground(false);
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
+        try {
+          await _aliyunPush.showIOSNoticeWhenForeground(false);
           showOkDialog('设置前台不显示通知成功');
-        } else {
-          showErrorDialog('设置前台不显示通知失败');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('设置前台不显示通知失败: ${error.message}');
         }
       },
       child: const Text('前台不显示通知'),
@@ -129,12 +126,11 @@ class _IOSPageState extends BaseState<IOSPage> {
 
         if (badge.isNotEmpty) {
           int badgeNum = int.parse(badge);
-          var result = await _aliyunPush.setIOSBadgeNum(badgeNum);
-          var code = result['code'];
-          if (code == kAliyunPushSuccessCode) {
+          try {
+            await _aliyunPush.setIOSBadgeNum(badgeNum);
             showOkDialog('设置角标数量$badgeNum成功');
-          } else {
-            showErrorDialog('设置角标失败');
+          } on AliyunPushException catch (error) {
+            showErrorDialog('设置角标失败: ${error.message}');
           }
         } else {
           showWarningDialog('请填写角标数量');
@@ -149,12 +145,11 @@ class _IOSPageState extends BaseState<IOSPage> {
 
         if (badge.isNotEmpty) {
           int badgeNum = int.parse(badge);
-          var result = await _aliyunPush.syncIOSBadgeNum(badgeNum);
-          var code = result['code'];
-          if (code == kAliyunPushSuccessCode) {
+          try {
+            await _aliyunPush.syncIOSBadgeNum(badgeNum);
             showOkDialog('同步角标数量$badgeNum成功');
-          } else {
-            showErrorDialog('同步角标失败');
+          } on AliyunPushException catch (error) {
+            showErrorDialog('同步角标失败: ${error.message}');
           }
         } else {
           showWarningDialog('请填写角标数量');

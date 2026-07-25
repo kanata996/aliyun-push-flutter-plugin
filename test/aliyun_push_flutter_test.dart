@@ -7,9 +7,10 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 class MockAliyunPushFlutterPlatform
     with MockPlatformInterfaceMixin
     implements AliyunPushFlutterPlatform {
-  final mapResult = <dynamic, dynamic>{'code': 'mock'};
   final stringResult = 'mock-string';
   final boolResult = true;
+  final listResult = const ['mock-item'];
+  final channelStatusResult = AliyunPushChannelStatus.enabled;
 
   ({String method, Object? arguments})? lastCall;
 
@@ -17,17 +18,16 @@ class MockAliyunPushFlutterPlatform
     lastCall = (method: method, arguments: arguments);
   }
 
-  Future<Map<dynamic, dynamic>> _recordMap(
+  Future<void> _recordVoid(
     String method, [
     Object? arguments,
   ]) async {
     _record(method, arguments);
-    return mapResult;
   }
 
   @override
-  Future<Map<dynamic, dynamic>> addAlias(String alias) {
-    return _recordMap('addAlias', alias);
+  Future<void> addAlias(String alias) {
+    return _recordVoid('addAlias', alias);
   }
 
   @override
@@ -57,22 +57,22 @@ class MockAliyunPushFlutterPlatform
   }
 
   @override
-  Future<Map<dynamic, dynamic>> bindAccount(String account) {
-    return _recordMap('bindAccount', account);
+  Future<void> bindAccount(String account) {
+    return _recordVoid('bindAccount', account);
   }
 
   @override
-  Future<Map<dynamic, dynamic>> bindPhoneNumber(String phone) {
-    return _recordMap('bindPhoneNumber', phone);
+  Future<void> bindPhoneNumber(String phone) {
+    return _recordVoid('bindPhoneNumber', phone);
   }
 
   @override
-  Future<Map<dynamic, dynamic>> bindTag(
+  Future<void> bindTag(
     List<String> tags, {
     int target = kAliyunTargetDevice,
     String? alias,
   }) {
-    return _recordMap('bindTag', {
+    return _recordVoid('bindTag', {
       'tags': tags,
       'target': target,
       'alias': alias,
@@ -80,22 +80,23 @@ class MockAliyunPushFlutterPlatform
   }
 
   @override
-  Future<Map<dynamic, dynamic>> checkAndroidPushChannelStatus() {
-    return _recordMap('checkAndroidPushChannelStatus');
+  Future<AliyunPushChannelStatus> checkAndroidPushChannelStatus() async {
+    _record('checkAndroidPushChannelStatus');
+    return channelStatusResult;
   }
 
   @override
-  Future<Map<dynamic, dynamic>> clearNotifications() {
-    return _recordMap('clearNotifications');
+  Future<void> clearNotifications() {
+    return _recordVoid('clearNotifications');
   }
 
   @override
-  Future<Map<dynamic, dynamic>> closeAndroidPushLog() {
-    return _recordMap('closeAndroidPushLog');
+  Future<void> closeAndroidPushLog() {
+    return _recordVoid('closeAndroidPushLog');
   }
 
   @override
-  Future<Map<dynamic, dynamic>> createAndroidChannel(
+  Future<void> createAndroidChannel(
     String id,
     String name,
     int importance,
@@ -112,7 +113,7 @@ class MockAliyunPushFlutterPlatform
     bool? vibration,
     List<int>? vibrationPatterns,
   }) {
-    return _recordMap('createAndroidChannel', {
+    return _recordVoid('createAndroidChannel', {
       'id': id,
       'name': name,
       'importance': importance,
@@ -132,12 +133,12 @@ class MockAliyunPushFlutterPlatform
   }
 
   @override
-  Future<Map<dynamic, dynamic>> createAndroidChannelGroup(
+  Future<void> createAndroidChannelGroup(
     String id,
     String name,
     String desc,
   ) {
-    return _recordMap('createAndroidChannelGroup', {
+    return _recordVoid('createAndroidChannelGroup', {
       'id': id,
       'name': name,
       'desc': desc,
@@ -157,16 +158,16 @@ class MockAliyunPushFlutterPlatform
   }
 
   @override
-  Future<Map<dynamic, dynamic>> initAndroidThirdPush() {
-    return _recordMap('initAndroidThirdPush');
+  Future<void> initAndroidThirdPush() {
+    return _recordVoid('initAndroidThirdPush');
   }
 
   @override
-  Future<Map<dynamic, dynamic>> initPush({
+  Future<void> initPush({
     String? appKey,
     String? appSecret,
   }) {
-    return _recordMap('initPush', {
+    return _recordVoid('initPush', {
       'appKey': appKey,
       'appSecret': appSecret,
     });
@@ -185,99 +186,101 @@ class MockAliyunPushFlutterPlatform
   }
 
   @override
-  void jumpToAndroidNotificationSettings({String? id}) {
+  Future<void> jumpToAndroidNotificationSettings({String? id}) async {
     _record('jumpToAndroidNotificationSettings', id);
   }
 
   @override
-  Future<Map<dynamic, dynamic>> listAlias() {
-    return _recordMap('listAlias');
+  Future<List<String>> listAlias() async {
+    _record('listAlias');
+    return listResult;
   }
 
   @override
-  Future<Map<dynamic, dynamic>> listTags({
+  Future<List<String>> listTags({
     int target = kAliyunTargetDevice,
-  }) {
-    return _recordMap('listTags', target);
+  }) async {
+    _record('listTags', target);
+    return listResult;
   }
 
   @override
-  Future<Map<dynamic, dynamic>> removeAlias(String alias) {
-    return _recordMap('removeAlias', alias);
+  Future<void> removeAlias(String alias) {
+    return _recordVoid('removeAlias', alias);
   }
 
   @override
-  Future<Map<dynamic, dynamic>> setAndroidLogLevel(int level) {
-    return _recordMap('setAndroidLogLevel', level);
+  Future<void> setAndroidLogLevel(int level) {
+    return _recordVoid('setAndroidLogLevel', level);
   }
 
   @override
-  Future<Map<dynamic, dynamic>> setAndroidBadgeNum(int num) {
-    return _recordMap('setAndroidBadgeNum', num);
+  Future<void> setAndroidBadgeNum(int num) {
+    return _recordVoid('setAndroidBadgeNum', num);
   }
 
   @override
-  Future<Map<dynamic, dynamic>> setIOSBadgeNum(int num) {
-    return _recordMap('setIOSBadgeNum', num);
+  Future<void> setIOSBadgeNum(int num) {
+    return _recordVoid('setIOSBadgeNum', num);
   }
 
   @override
-  Future<Map<dynamic, dynamic>> setIOSLogLevel(int level) {
-    return _recordMap('setIOSLogLevel', level);
+  Future<void> setIOSLogLevel(int level) {
+    return _recordVoid('setIOSLogLevel', level);
   }
 
   @override
-  Future<Map<dynamic, dynamic>> setNotificationInGroup(bool inGroup) {
-    return _recordMap('setNotificationInGroup', inGroup);
+  Future<void> setNotificationInGroup(bool inGroup) {
+    return _recordVoid('setNotificationInGroup', inGroup);
   }
 
   @override
-  void setPluginLogEnabled(bool enabled) {
+  Future<void> setPluginLogEnabled(bool enabled) async {
     _record('setPluginLogEnabled', enabled);
   }
 
   @override
-  Future<Map<dynamic, dynamic>> showIOSNoticeWhenForeground(bool enable) {
-    return _recordMap('showIOSNoticeWhenForeground', enable);
+  Future<void> showIOSNoticeWhenForeground(bool enable) {
+    return _recordVoid('showIOSNoticeWhenForeground', enable);
   }
 
   @override
-  Future<Map<dynamic, dynamic>> syncIOSBadgeNum(int num) {
-    return _recordMap('syncIOSBadgeNum', num);
+  Future<void> syncIOSBadgeNum(int num) {
+    return _recordVoid('syncIOSBadgeNum', num);
   }
 
   @override
-  Future<Map<dynamic, dynamic>> turnOffAndroidPushChannel() {
-    return _recordMap('turnOffAndroidPushChannel');
+  Future<void> turnOffAndroidPushChannel() {
+    return _recordVoid('turnOffAndroidPushChannel');
   }
 
   @override
-  Future<Map<dynamic, dynamic>> turnOnAndroidPushChannel() {
-    return _recordMap('turnOnAndroidPushChannel');
+  Future<void> turnOnAndroidPushChannel() {
+    return _recordVoid('turnOnAndroidPushChannel');
   }
 
   @override
-  Future<Map<dynamic, dynamic>> turnOnIOSDebug() {
-    return _recordMap('turnOnIOSDebug');
+  Future<void> turnOnIOSDebug() {
+    return _recordVoid('turnOnIOSDebug');
   }
 
   @override
-  Future<Map<dynamic, dynamic>> unbindAccount() {
-    return _recordMap('unbindAccount');
+  Future<void> unbindAccount() {
+    return _recordVoid('unbindAccount');
   }
 
   @override
-  Future<Map<dynamic, dynamic>> unbindPhoneNumber() {
-    return _recordMap('unbindPhoneNumber');
+  Future<void> unbindPhoneNumber() {
+    return _recordVoid('unbindPhoneNumber');
   }
 
   @override
-  Future<Map<dynamic, dynamic>> unbindTag(
+  Future<void> unbindTag(
     List<String> tags, {
     int target = kAliyunTargetDevice,
     String? alias,
   }) {
-    return _recordMap('unbindTag', {
+    return _recordVoid('unbindTag', {
       'tags': tags,
       'target': target,
       'alias': alias,
@@ -305,13 +308,30 @@ void main() {
     expect(platform.lastCall?.arguments, arguments);
   }
 
-  Future<void> expectMapCall(
-    Future<Map<dynamic, dynamic>> result,
+  Future<void> expectVoidCall(
+    Future<void> result,
     String method, [
     Object? arguments,
   ]) async {
-    expect(await result, same(platform.mapResult));
+    await result;
     expectCall(method, arguments);
+  }
+
+  Future<void> expectListCall(
+    Future<List<String>> result,
+    String method, [
+    Object? arguments,
+  ]) async {
+    expect(await result, platform.listResult);
+    expectCall(method, arguments);
+  }
+
+  Future<void> expectChannelStatusCall(
+    Future<AliyunPushChannelStatus> result,
+    String method,
+  ) async {
+    expect(await result, platform.channelStatusResult);
+    expectCall(method);
   }
 
   Future<void> expectStringCall(
@@ -408,12 +428,12 @@ void main() {
   });
 
   test('forwards initialization and device queries', () async {
-    await expectMapCall(
+    await expectVoidCall(
       plugin.initPush(appKey: 'app-key', appSecret: 'app-secret'),
       'initPush',
       {'appKey': 'app-key', 'appSecret': 'app-secret'},
     );
-    await expectMapCall(
+    await expectVoidCall(
       plugin.initAndroidThirdPush(),
       'initAndroidThirdPush',
     );
@@ -425,25 +445,25 @@ void main() {
   });
 
   test('forwards account, phone, and alias operations', () async {
-    await expectMapCall(
+    await expectVoidCall(
       plugin.bindAccount('account'),
       'bindAccount',
       'account',
     );
-    await expectMapCall(plugin.unbindAccount(), 'unbindAccount');
-    await expectMapCall(
+    await expectVoidCall(plugin.unbindAccount(), 'unbindAccount');
+    await expectVoidCall(
       plugin.bindPhoneNumber('13800138000'),
       'bindPhoneNumber',
       '13800138000',
     );
-    await expectMapCall(plugin.unbindPhoneNumber(), 'unbindPhoneNumber');
-    await expectMapCall(plugin.addAlias('alias'), 'addAlias', 'alias');
-    await expectMapCall(plugin.removeAlias('alias'), 'removeAlias', 'alias');
-    await expectMapCall(plugin.listAlias(), 'listAlias');
+    await expectVoidCall(plugin.unbindPhoneNumber(), 'unbindPhoneNumber');
+    await expectVoidCall(plugin.addAlias('alias'), 'addAlias', 'alias');
+    await expectVoidCall(plugin.removeAlias('alias'), 'removeAlias', 'alias');
+    await expectListCall(plugin.listAlias(), 'listAlias');
   });
 
   test('forwards tag operations and default targets', () async {
-    await expectMapCall(
+    await expectVoidCall(
       plugin.bindTag(['tag-a']),
       'bindTag',
       {
@@ -452,7 +472,7 @@ void main() {
         'alias': null,
       },
     );
-    await expectMapCall(
+    await expectVoidCall(
       plugin.unbindTag(
         ['tag-b'],
         target: kAliyunTargetAlias,
@@ -465,12 +485,12 @@ void main() {
         'alias': 'alias',
       },
     );
-    await expectMapCall(
+    await expectListCall(
       plugin.listTags(),
       'listTags',
       kAliyunTargetDevice,
     );
-    await expectMapCall(
+    await expectListCall(
       plugin.listTags(target: kAliyunTargetAccount),
       'listTags',
       kAliyunTargetAccount,
@@ -478,12 +498,12 @@ void main() {
   });
 
   test('forwards Android notification operations', () async {
-    await expectMapCall(
+    await expectVoidCall(
       plugin.closeAndroidPushLog(),
       'closeAndroidPushLog',
     );
-    await expectMapCall(plugin.clearNotifications(), 'clearNotifications');
-    await expectMapCall(
+    await expectVoidCall(plugin.clearNotifications(), 'clearNotifications');
+    await expectVoidCall(
       plugin.createAndroidChannel(
         'channel-id',
         'channel-name',
@@ -520,7 +540,7 @@ void main() {
         'vibrationPatterns': [100, 200],
       },
     );
-    await expectMapCall(
+    await expectVoidCall(
       plugin.createAndroidChannelGroup('group-id', 'group-name', 'group-desc'),
       'createAndroidChannelGroup',
       {
@@ -535,33 +555,36 @@ void main() {
       'channel-id',
     );
 
-    plugin.jumpToAndroidNotificationSettings(id: 'channel-id');
-    expectCall('jumpToAndroidNotificationSettings', 'channel-id');
+    await expectVoidCall(
+      plugin.jumpToAndroidNotificationSettings(id: 'channel-id'),
+      'jumpToAndroidNotificationSettings',
+      'channel-id',
+    );
 
-    await expectMapCall(
+    await expectVoidCall(
       plugin.setAndroidLogLevel(kAliyunPushAndroidLogLevelInfo),
       'setAndroidLogLevel',
       kAliyunPushAndroidLogLevelInfo,
     );
-    await expectMapCall(
+    await expectVoidCall(
       plugin.setAndroidBadgeNum(7),
       'setAndroidBadgeNum',
       7,
     );
-    await expectMapCall(
+    await expectVoidCall(
       plugin.setNotificationInGroup(true),
       'setNotificationInGroup',
       true,
     );
-    await expectMapCall(
+    await expectChannelStatusCall(
       plugin.checkAndroidPushChannelStatus(),
       'checkAndroidPushChannelStatus',
     );
-    await expectMapCall(
+    await expectVoidCall(
       plugin.turnOnAndroidPushChannel(),
       'turnOnAndroidPushChannel',
     );
-    await expectMapCall(
+    await expectVoidCall(
       plugin.turnOffAndroidPushChannel(),
       'turnOffAndroidPushChannel',
     );
@@ -572,35 +595,37 @@ void main() {
       plugin.isIOSChannelOpened(),
       'isIOSChannelOpened',
     );
-    await expectMapCall(
+    await expectVoidCall(
       plugin.setIOSBadgeNum(3),
       'setIOSBadgeNum',
       3,
     );
-    await expectMapCall(
+    await expectVoidCall(
       plugin.syncIOSBadgeNum(4),
       'syncIOSBadgeNum',
       4,
     );
-    await expectMapCall(
+    await expectVoidCall(
       plugin.showIOSNoticeWhenForeground(true),
       'showIOSNoticeWhenForeground',
       true,
     );
-    await expectMapCall(
+    await expectVoidCall(
       plugin.turnOnIOSDebug(),
       'turnOnIOSDebug',
     );
-    await expectMapCall(
+    await expectVoidCall(
       plugin.setIOSLogLevel(kAliyunPushIOSLogLevelDebug),
       'setIOSLogLevel',
       kAliyunPushIOSLogLevelDebug,
     );
   });
 
-  test('forwards plugin log setting', () {
-    plugin.setPluginLogEnabled(true);
-
-    expectCall('setPluginLogEnabled', true);
+  test('forwards plugin log setting', () async {
+    await expectVoidCall(
+      plugin.setPluginLogEnabled(true),
+      'setPluginLogEnabled',
+      true,
+    );
   });
 }
