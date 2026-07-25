@@ -69,18 +69,17 @@ class _AndroidPageState extends BaseState<AndroidPage> {
       onPressed: () async {
         var phone = _addPhoneController.text;
         if (phone.isNotEmpty) {
-          var result = await _aliyunPush.bindPhoneNumber(phone);
-          var code = result['code'];
-          if (code == kAliyunPushSuccessCode) {
+          try {
+            await _aliyunPush.bindPhoneNumber(phone);
             setState(() {
               _boundPhone = phone;
             });
             _addPhoneController.clear();
             showOkDialog('绑定手机号码$phone成功');
-          } else {
-            var errorCode = result['code'];
-            var errorMsg = result['errorMsg'];
-            showErrorDialog('绑定手机号码$phone失败: $errorCode - $errorMsg');
+          } on AliyunPushException catch (error) {
+            showErrorDialog(
+              '绑定手机号码$phone失败: ${error.code} - ${error.message}',
+            );
           }
         } else {
           showWarningDialog('请输入要绑定的手机号码');
@@ -95,17 +94,14 @@ class _AndroidPageState extends BaseState<AndroidPage> {
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.unbindPhoneNumber();
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
+        try {
+          await _aliyunPush.unbindPhoneNumber();
           setState(() {
             _boundPhone = "";
           });
           showOkDialog('解绑手机号码成功');
-        } else {
-          var errorCode = result['code'];
-          var errorMsg = result['errorMsg'];
-          showErrorDialog('解绑手机号码失败: $errorCode - $errorMsg');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('解绑手机号码失败: ${error.code} - ${error.message}');
         }
       },
       child: const Text('解绑手机号码'),
@@ -154,14 +150,11 @@ class _AndroidPageState extends BaseState<AndroidPage> {
           logLevel = kAliyunPushAndroidLogLevelDebug;
         }
 
-        var result = await _aliyunPush.setAndroidLogLevel(logLevel);
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
+        try {
+          await _aliyunPush.setAndroidLogLevel(logLevel);
           showOkDialog('设置LogLevel $_selectedLogLevel 成功');
-        } else {
-          var errorCode = result['code'];
-          var errorMsg = result['errorMsg'];
-          showErrorDialog('设置LogLevel失败: $errorCode - $errorMsg');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('设置LogLevel失败: ${error.code} - ${error.message}');
         }
       },
       child: Text('设置Log Level为 $_selectedLogLevel'),
@@ -169,12 +162,11 @@ class _AndroidPageState extends BaseState<AndroidPage> {
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.closeAndroidPushLog();
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
+        try {
+          await _aliyunPush.closeAndroidPushLog();
           showOkDialog('关闭 Push Log 成功');
-        } else {
-          showErrorDialog('关闭 Push Log 失败');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('关闭 Push Log 失败: ${error.message}');
         }
       },
       child: const Text('关闭 Push Log'),
@@ -191,12 +183,11 @@ class _AndroidPageState extends BaseState<AndroidPage> {
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.setNotificationInGroup(true);
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
+        try {
+          await _aliyunPush.setNotificationInGroup(true);
           showOkDialog('开启通知分组展示成功');
-        } else {
-          showErrorDialog('开启通知分组展示失败');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('开启通知分组展示失败: ${error.message}');
         }
       },
       child: const Text('开启通知分组展示'),
@@ -204,12 +195,11 @@ class _AndroidPageState extends BaseState<AndroidPage> {
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.setNotificationInGroup(false);
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
+        try {
+          await _aliyunPush.setNotificationInGroup(false);
           showOkDialog('关闭通知分组展示成功');
-        } else {
-          showErrorDialog('关闭通知分组展示失败');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('关闭通知分组展示失败: ${error.message}');
         }
       },
       child: const Text('关闭通知分组展示'),
@@ -217,12 +207,11 @@ class _AndroidPageState extends BaseState<AndroidPage> {
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.clearNotifications();
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
+        try {
+          await _aliyunPush.clearNotifications();
           showOkDialog('清除所有通知成功');
-        } else {
-          showErrorDialog('清除所有通知失败');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('清除所有通知失败: ${error.message}');
         }
       },
       child: const Text('清除所有通知'),
@@ -246,14 +235,11 @@ class _AndroidPageState extends BaseState<AndroidPage> {
           return;
         }
 
-        var result = await _aliyunPush.setAndroidBadgeNum(badge);
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
+        try {
+          await _aliyunPush.setAndroidBadgeNum(badge);
           showOkDialog('设置角标数量 $badge 成功');
-        } else {
-          var errorCode = result['code'];
-          var errorMsg = result['errorMsg'];
-          showErrorDialog('设置角标失败: $errorCode - $errorMsg');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('设置角标失败: ${error.code} - ${error.message}');
         }
       },
       child: const Text('设置角标数量'),
@@ -261,15 +247,12 @@ class _AndroidPageState extends BaseState<AndroidPage> {
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.setAndroidBadgeNum(0);
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
+        try {
+          await _aliyunPush.setAndroidBadgeNum(0);
           _badgeController.text = '0';
           showOkDialog('清除角标成功');
-        } else {
-          var errorCode = result['code'];
-          var errorMsg = result['errorMsg'];
-          showErrorDialog('清除角标失败: $errorCode - $errorMsg');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('清除角标失败: ${error.code} - ${error.message}');
         }
       },
       child: const Text('清除角标'),
@@ -289,16 +272,18 @@ class _AndroidPageState extends BaseState<AndroidPage> {
         var channel = _channelController.text;
 
         if (channel.isNotEmpty) {
-          var result = await _aliyunPush.createAndroidChannel(
-              channel, '测试通道A', 3, '测试创建通知通道');
-
-          var code = result['code'];
-          if (code == kAliyunPushSuccessCode) {
+          try {
+            await _aliyunPush.createAndroidChannel(
+              channel,
+              '测试通道A',
+              3,
+              '测试创建通知通道',
+            );
             showOkDialog('创建$channel通道成功');
-          } else {
-            var errorCode = result['code'];
-            var errorMsg = result['errorMsg'];
-            showErrorDialog('创建$channel通道失败, $errorCode - $errorMsg');
+          } on AliyunPushException catch (error) {
+            showErrorDialog(
+              '创建$channel通道失败, ${error.code} - ${error.message}',
+            );
           }
         } else {
           showWarningDialog('通道名称不能为空');
@@ -330,16 +315,16 @@ class _AndroidPageState extends BaseState<AndroidPage> {
     ));
 
     children.add(FilledButton(
-      onPressed: () {
-        _aliyunPush.jumpToAndroidNotificationSettings();
+      onPressed: () async {
+        await _aliyunPush.jumpToAndroidNotificationSettings();
       },
       child: const Text('跳转通知设置界面'),
     ));
 
     children.add(FilledButton(
-      onPressed: () {
+      onPressed: () async {
         var channel = _channelController.text;
-        _aliyunPush.jumpToAndroidNotificationSettings(id: channel);
+        await _aliyunPush.jumpToAndroidNotificationSettings(id: channel);
       },
       child: const Text('跳转通知通道设置界面'),
     ));

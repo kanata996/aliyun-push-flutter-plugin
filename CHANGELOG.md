@@ -1,3 +1,20 @@
+## 1.5.0
+
+- **Breaking:** 移除公开 API 的 `Map<dynamic, dynamic>` 结果协议
+- 新增 `setIOSForegroundNoticeMode`，支持 iOS 前台通知仅回调、仅展示、展示且回调三种模式
+- 废弃 `showIOSNoticeWhenForeground`，建议使用 `setIOSForegroundNoticeMode`
+- **Breaking:** `showIOSNoticeWhenForeground(true)` 调整为仅展示通知、不触发回调，与官方语义保持一致
+- 命令 API 统一返回 `Future<void>`，查询 API 直接返回 `String`、`bool`、`List<String>` 或 `AliyunPushChannelStatus`
+- 新增 `AliyunPushException`，统一表示原生 SDK、平台限制、无效响应和 MethodChannel 失败
+- Android 与 iOS 的别名、标签查询结果统一为 `List<String>`
+- 新增设备标签标准接口 `bindDeviceTag`、`unbindDeviceTag`、`listDeviceTags`
+- 废弃旧标签接口 `bindTag`、`unbindTag`、`listTags`
+- 废弃账号和别名标签目标常量 `kAliyunTargetAccount`、`kAliyunTargetAlias`
+- 平台专用 API 在错误平台调用时不再返回空值或 `false`，改为抛出 `AliyunPushException`
+- `jumpToAndroidNotificationSettings` 和 `setPluginLogEnabled` 改为可等待的 `Future<void>`
+- **Breaking:** Android 通知回调中的 `extraMap` 统一为 Map；点击回调中的 JSON 字符串会自动解析
+- `extraMap` 解析失败时返回空 Map，并通过 `extraMapRaw` 保留原始字符串
+
 ## 1.4.0
 
 - iOS SDK 升级至 3.2.4

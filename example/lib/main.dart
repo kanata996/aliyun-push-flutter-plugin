@@ -84,8 +84,8 @@ class _HomePageState extends BaseState<HomePage> {
             child: const Text('iOS特定方法'),
           ),
           FilledButton(
-            onPressed: () {
-              _aliyunPush.setPluginLogEnabled(true);
+            onPressed: () async {
+              await _aliyunPush.setPluginLogEnabled(true);
             },
             child: const Text('开启插件日志'),
           ),
@@ -139,25 +139,20 @@ class _HomePageState extends BaseState<HomePage> {
       appSecret = "";
     }
 
-    var result =
-        await _aliyunPush.initPush(appKey: appKey, appSecret: appSecret);
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
+    try {
+      await _aliyunPush.initPush(appKey: appKey, appSecret: appSecret);
       showOkDialog('初始化成功');
-    } else {
-      var errorMsg = result['errorMsg'];
-      showErrorDialog('初始化推送失败: $code - $errorMsg');
+    } on AliyunPushException catch (error) {
+      showErrorDialog('初始化推送失败: ${error.code} - ${error.message}');
     }
   }
 
   Future<void> _initAliyunThirdPush() async {
-    var result = await _aliyunPush.initAndroidThirdPush();
-    var code = result['code'];
-    if (code == kAliyunPushSuccessCode) {
+    try {
+      await _aliyunPush.initAndroidThirdPush();
       showOkDialog('初始化辅助通道成功');
-    } else {
-      var errorMsg = result['errorMsg'];
-      showErrorDialog('初始化辅助通道失败: $code - $errorMsg');
+    } on AliyunPushException catch (error) {
+      showErrorDialog('初始化辅助通道失败: ${error.code} - ${error.message}');
     }
   }
 

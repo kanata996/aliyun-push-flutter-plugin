@@ -33,12 +33,11 @@ class _IOSPageState extends BaseState<IOSPage> {
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.setIOSLogLevel(4);
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
+        try {
+          await _aliyunPush.setIOSLogLevel(4);
           showOkDialog('打开Debug日志成功');
-        } else {
-          showErrorDialog('打开Debug日志失败');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('打开Debug日志失败: ${error.message}');
         }
       },
       child: const Text('打开debug日志'),
@@ -76,33 +75,49 @@ class _IOSPageState extends BaseState<IOSPage> {
   Widget _setNoticeWhenForegroundBuilder() {
     final List<Widget> children = [];
 
-    children.add(titleBuilder('设置前台显示通知'));
+    children.add(titleBuilder('设置前台通知处理模式'));
     children.add(const SizedBox(height: 20));
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.showIOSNoticeWhenForeground(true);
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
-          showOkDialog('设置前台显示通知成功');
-        } else {
-          showErrorDialog('设置前台显示通知失败');
+        try {
+          await _aliyunPush.setIOSForegroundNoticeMode(
+            ForegroundNoticeMode.callbackOnly,
+          );
+          showOkDialog('设置前台仅回调成功');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('设置前台仅回调失败: ${error.message}');
         }
       },
-      child: const Text('前台显示通知'),
+      child: const Text('仅回调，不展示通知'),
     ));
 
     children.add(FilledButton(
       onPressed: () async {
-        var result = await _aliyunPush.showIOSNoticeWhenForeground(false);
-        var code = result['code'];
-        if (code == kAliyunPushSuccessCode) {
-          showOkDialog('设置前台不显示通知成功');
-        } else {
-          showErrorDialog('设置前台不显示通知失败');
+        try {
+          await _aliyunPush.setIOSForegroundNoticeMode(
+            ForegroundNoticeMode.showOnly,
+          );
+          showOkDialog('设置前台仅展示成功');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('设置前台仅展示失败: ${error.message}');
         }
       },
-      child: const Text('前台不显示通知'),
+      child: const Text('仅展示通知，不回调'),
+    ));
+
+    children.add(FilledButton(
+      onPressed: () async {
+        try {
+          await _aliyunPush.setIOSForegroundNoticeMode(
+            ForegroundNoticeMode.showAndCallback,
+          );
+          showOkDialog('设置前台展示且回调成功');
+        } on AliyunPushException catch (error) {
+          showErrorDialog('设置前台展示且回调失败: ${error.message}');
+        }
+      },
+      child: const Text('展示通知且回调'),
     ));
 
     return cardBuilder(Column(children: children));
@@ -129,12 +144,11 @@ class _IOSPageState extends BaseState<IOSPage> {
 
         if (badge.isNotEmpty) {
           int badgeNum = int.parse(badge);
-          var result = await _aliyunPush.setIOSBadgeNum(badgeNum);
-          var code = result['code'];
-          if (code == kAliyunPushSuccessCode) {
+          try {
+            await _aliyunPush.setIOSBadgeNum(badgeNum);
             showOkDialog('设置角标数量$badgeNum成功');
-          } else {
-            showErrorDialog('设置角标失败');
+          } on AliyunPushException catch (error) {
+            showErrorDialog('设置角标失败: ${error.message}');
           }
         } else {
           showWarningDialog('请填写角标数量');
@@ -149,12 +163,11 @@ class _IOSPageState extends BaseState<IOSPage> {
 
         if (badge.isNotEmpty) {
           int badgeNum = int.parse(badge);
-          var result = await _aliyunPush.syncIOSBadgeNum(badgeNum);
-          var code = result['code'];
-          if (code == kAliyunPushSuccessCode) {
+          try {
+            await _aliyunPush.syncIOSBadgeNum(badgeNum);
             showOkDialog('同步角标数量$badgeNum成功');
-          } else {
-            showErrorDialog('同步角标失败');
+          } on AliyunPushException catch (error) {
+            showErrorDialog('同步角标失败: ${error.message}');
           }
         } else {
           showWarningDialog('请填写角标数量');

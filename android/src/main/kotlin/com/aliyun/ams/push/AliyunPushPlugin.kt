@@ -215,11 +215,6 @@ class AliyunPushPlugin : FlutterPlugin, MethodCallHandler {
                 }
             }
         })
-
-        pushService.turnOnPushChannel(object : CommonCallback {
-            override fun onSuccess(s: String) {}
-            override fun onFailed(s: String, s1: String) {}
-        })
     }
 
     private fun initThirdPush(result: Result) {
