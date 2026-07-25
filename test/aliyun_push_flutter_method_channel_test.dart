@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:aliyun_push_flutter/aliyun_push_flutter.dart';
 import 'package:aliyun_push_flutter/aliyun_push_flutter_method_channel.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,11 +15,13 @@ void main() {
   late MethodChannelAliyunPushFlutter platform;
 
   setUp(() {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
     platform = MethodChannelAliyunPushFlutter();
     messenger.setMockMethodCallHandler(channel, (_) async => null);
   });
 
   tearDown(() {
+    debugDefaultTargetPlatformOverride = null;
     platform.methodChannel.setMethodCallHandler(null);
     messenger.setMockMethodCallHandler(channel, null);
   });
@@ -93,6 +96,87 @@ void main() {
 
     expect(receivedEvents, {
       for (final event in events) event: {'event': event},
+    });
+  });
+
+  test('decodes Android notification extraMap JSON strings', () async {
+    Map<dynamic, dynamic>? receivedMessage;
+    platform.addMessageReceiver(
+      onNotificationOpened: (message) async => receivedMessage = message,
+    );
+
+    await sendPlatformCall('onNotificationOpened', {
+      'title': 'title',
+      'extraMap': '{"page":"detail","id":"42"}',
+    });
+
+    expect(receivedMessage, {
+      'title': 'title',
+      'extraMap': {'page': 'detail', 'id': '42'},
+    });
+  });
+
+  test('keeps Android notification extraMap maps', () async {
+    Map<dynamic, dynamic>? receivedMessage;
+    platform.addMessageReceiver(
+      onNotification: (message) async => receivedMessage = message,
+    );
+
+    await sendPlatformCall('onNotification', {
+      'extraMap': {'page': 'home'},
+    });
+
+    expect(receivedMessage, {
+      'extraMap': {'page': 'home'},
+    });
+  });
+
+  test('normalizes empty Android notification extraMap values', () async {
+    final receivedMessages = <Map<dynamic, dynamic>>[];
+    platform.addMessageReceiver(
+      onNotificationOpened: (message) async => receivedMessages.add(message),
+    );
+
+    await sendPlatformCall('onNotificationOpened', {'extraMap': ''});
+    await sendPlatformCall('onNotificationOpened', {'extraMap': null});
+
+    expect(receivedMessages, [
+      {'extraMap': <String, dynamic>{}},
+      {'extraMap': <String, dynamic>{}},
+    ]);
+  });
+
+  test('preserves malformed Android extraMap strings for diagnostics',
+      () async {
+    Map<dynamic, dynamic>? receivedMessage;
+    platform.addMessageReceiver(
+      onAndroidNotificationClickedWithNoAction: (message) async =>
+          receivedMessage = message,
+    );
+
+    await sendPlatformCall('onNotificationClickedWithNoAction', {
+      'extraMap': 'invalid JSON',
+    });
+
+    expect(receivedMessage, {
+      'extraMap': <String, dynamic>{},
+      'extraMapRaw': 'invalid JSON',
+    });
+  });
+
+  test('does not normalize iOS notification payload fields', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    Map<dynamic, dynamic>? receivedMessage;
+    platform.addMessageReceiver(
+      onNotificationOpened: (message) async => receivedMessage = message,
+    );
+
+    await sendPlatformCall('onNotificationOpened', {
+      'extraMap': '{"custom":"value"}',
+    });
+
+    expect(receivedMessage, {
+      'extraMap': '{"custom":"value"}',
     });
   });
 

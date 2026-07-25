@@ -425,6 +425,11 @@ void addMessageReceiver(
 | onIOSRegisterDeviceTokenSuccess          | iOS         | 注册 APNs token 成功回调                                                                                                                             |
 | onIOSRegisterDeviceTokenFailed           | iOS         | 注册 APNs token 失败回调                                                                                                                             |
 
+Android 通知回调中的 `extraMap` 始终为 Map。`onNotificationOpened` 和
+`onAndroidNotificationClickedWithNoAction` 原生返回的 JSON 字符串会自动解析；
+如果解析失败，`extraMap` 为空 Map，原始字符串保存在 `extraMapRaw` 中。iOS 回调仍返回
+APNs 的原始 `userInfo`。
+
 代码示例：
 
 ```dart

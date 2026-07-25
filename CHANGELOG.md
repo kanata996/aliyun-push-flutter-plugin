@@ -1,3 +1,8 @@
+## 1.5.0
+
+- **Breaking:** Android 通知回调中的 `extraMap` 统一为 Map；点击回调中的 JSON 字符串会自动解析
+- `extraMap` 解析失败时返回空 Map，并通过 `extraMapRaw` 保留原始字符串
+
 ## 1.4.0
 
 - iOS SDK 升级至 3.2.4

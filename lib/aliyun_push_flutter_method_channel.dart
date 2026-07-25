@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -74,6 +75,9 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
       return;
     }
     final message = Map<dynamic, dynamic>.from(arguments);
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      _normalizeAndroidExtraMap(message);
+    }
 
     switch (call.method) {
       case 'onNotification':
@@ -94,6 +98,39 @@ class MethodChannelAliyunPushFlutter extends AliyunPushFlutterPlatform {
         return _onIOSRegisterDeviceTokenSuccess?.call(message);
       case 'onRegisterDeviceTokenFailed':
         return _onIOSRegisterDeviceTokenFailed?.call(message);
+    }
+  }
+
+  void _normalizeAndroidExtraMap(Map<dynamic, dynamic> message) {
+    if (!message.containsKey('extraMap')) {
+      return;
+    }
+
+    final extraMap = message['extraMap'];
+    if (extraMap is Map) {
+      message['extraMap'] = extraMap.map<String, dynamic>(
+        (key, value) => MapEntry(key.toString(), value),
+      );
+      return;
+    }
+
+    if (extraMap is String && extraMap.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(extraMap);
+        if (decoded is Map) {
+          message['extraMap'] = decoded.map<String, dynamic>(
+            (key, value) => MapEntry(key.toString(), value),
+          );
+          return;
+        }
+      } on FormatException {
+        // Preserve the original value below for diagnostics.
+      }
+    }
+
+    message['extraMap'] = <String, dynamic>{};
+    if (extraMap is String && extraMap.isNotEmpty) {
+      message['extraMapRaw'] = extraMap;
     }
   }
 
