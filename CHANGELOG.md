@@ -1,3 +1,8 @@
+## 2.0.0
+
+- **Breaking:** 最低 Flutter 版本提升至 3.47，迁移 Android 插件到 AGP 9 内置 Kotlin
+- 示例工程升级至 AGP 9.4.0 和 Gradle 9.6.0
+
 ## 1.5.0
 
 - **Breaking:** 移除公开 API 的 `Map<dynamic, dynamic>` 结果协议

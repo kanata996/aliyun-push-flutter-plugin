@@ -69,6 +69,8 @@ iOS
 
 ## 二、安装
 
+2.0.0 起最低要求 Flutter 3.47；Android 工程需使用 AGP 9 和内置 Kotlin。示例基于 AGP 9.4.0、Gradle 9.6.0。
+
 在`pubspec.yaml`中加入 dependencies
 
 ```yaml
